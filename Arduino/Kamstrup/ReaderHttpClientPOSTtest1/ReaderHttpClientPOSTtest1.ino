@@ -1,7 +1,7 @@
 /**
- * BasicHTTPClient.ino
- *
- *  Created on: 24.05.2015
+ * Based on the BasicHTTPClient.ino
+ * from the esp8266-examples
+ * Modified 2018-05-02-18
  *
  */
 
