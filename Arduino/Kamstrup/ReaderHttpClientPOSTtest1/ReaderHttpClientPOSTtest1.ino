@@ -2,7 +2,7 @@
  * Based on the BasicHTTPClient.ino
  * from the esp8266-examples
  * Modified 2018-05-02-18
- *
+ * Slyngelklubben
  */
 
 #include <Arduino.h>
