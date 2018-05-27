@@ -30,25 +30,15 @@ GetData <- function(uri="http://192.168.0.47:3000/hus/public/tyv") {
   plyr::arrange(d6, Time)  
 }
 
-if(FALSE) { ## Use canned data
-  flog.debug("Start getting data...")
-  d1 <- GET("http://192.168.0.47:3000/hus/public/tyv")
-  d2 <- content(d1)
-  d3 <- ldply(d2, as.data.frame)
-  Pat <- '^(\\S+)\\s+(\\d+)$'
-  d4 <- transform(d3, Source=sub(Pat,'\\1',as.character(content)), Value=as.numeric(sub(Pat,'\\2',as.character(content))), Time=ymd_hms(timestamp))
-  d5 <- transform(d4, TimeDiff=c(NA, diff(Time)))
-  d6 <- transform(d5, perMinute=60*60/TimeDiff)
-  Now <- Sys.Date()
-  DateMin <- min(as.Date(d6$Time))
-  DateMax <- max(as.Date(d6$Time))
-} else {
-##  d6 <- read.csv("Dash1/data1_2018-05-23.csv")
-  d6 <- read.csv("data1_2018-05-23.csv")
-  d6 <- transform(d6, Time=ymd_hms(Time))
-  Now <- ymd_hms("2018-05-02 21:20:04")
-  DateMin <- min(as.Date(d6$Time))
-  DateMax <- max(as.Date(d6$Time))
+if(TRUE) { ## Use canned data
+    GetData <- function(uri="") {
+        d6 <- read.csv("data1_2018-05-23.csv")
+        d6 <- plyr::arrange(transform(d6, Time=ymd_hms(Time)), Time)
+        Now <- ymd_hms("2018-05-02 21:20:04")
+        DateMin <- min(as.Date(d6$Time))
+        DateMax <- max(as.Date(d6$Time))
+        d6
+    }
 }
 
 flog.debug("Data aquired")
@@ -62,7 +52,12 @@ flog.debug("Data aquired")
 # Define UI for application that draws a histogram
 ui <- dashboardPage(
   dashboardHeader(title="Kamstrup reader. Power consumption"),
-  dashboardSidebar(),
+  dashboardSidebar(
+       sidebarMenu(
+           menuItem( title = "Controls", sliderInput("slider", "Minutes of data to show:", 1, 100, 50))
+         , menuItem(title = "Date to show", dateInput("CenterDate", label="Select date", min=DateMin, max=DateMax, weekstart = 1))
+           )
+  ),
   dashboardBody(
     # Boxes need to be put in a row (or column)
     fluidRow(
@@ -72,15 +67,9 @@ ui <- dashboardPage(
     fluidRow(
       box(plotOutput("PlotAllData", height = 250)),
       box(plotOutput("PlotLastHour", height = 250))
-      , box(
-        title = "Controls",
-        sliderInput("slider", "Minutes of data to show:", 1, 100, 50))
-      , box(title = "Date to show", dateInput("CenterDate", label="Select date", min=DateMin, max=DateMax, weekstart = 1))
-      , box(actionButton("go", "Update"))
-      )
+    )
   )
 )
-
 # Define server logic required to draw a histogram
 server <- function(input, output,session) {
   
