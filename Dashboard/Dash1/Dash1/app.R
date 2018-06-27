@@ -19,6 +19,8 @@ library(lubridate)
 library(lattice)
 library(futile.logger)
 
+flog.threshold(TRACE)
+
 GetRestData <- function(uri="http://192.168.0.47:3000/hus/public/tyv") {
   d1 <- GET(uri)
   d2 <- content(d1)
@@ -30,10 +32,10 @@ GetRestData <- function(uri="http://192.168.0.47:3000/hus/public/tyv") {
   plyr::arrange(d6, Time)  
 }
 
-require(RPostgres)
+require(RPostgreSQL)
 library(DBI)
 # Connect to a specific postgres database i.e. Heroku
-con <- dbConnect(RPostgres::Postgres(),dbname = 'hus', 
+con <- dbConnect(RPostgreSQL::PostgreSQL(),dbname = 'hus', 
                  host = '192.168.0.47', 
                  port = 5432, 
                  user = 'jacob',
@@ -42,7 +44,9 @@ con <- dbConnect(RPostgres::Postgres(),dbname = 'hus',
 
 GetPgData <- function(db=con){
   stm <- sprintf("select * from tyv;")
+  flog.trace("Get data...")
   d1 <- dbGetQuery(conn=db, statement=stm)  
+  flog.trace("... done")
   Pat <- '^(\\S+)\\s+(\\d+)$'
   d2 <- transform(d1, Source=sub(Pat,'\\1',as.character(content)), Value=as.numeric(sub(Pat,'\\2',as.character(content))), Time=ymd_hms(timestamp))
   d3 <-   plyr::arrange(d2, Time)  
@@ -118,6 +122,7 @@ server <- function(input, output,session) {
     
     output$CurrentTime <- renderValueBox({
         invalidateLater(1L, session)
+        flog.trace("Get time: %s", Sys.time())
         valueBox(format(Sys.time()), "Current Time", color="light-blue")})    
     
     output$PlotAllData <- renderPlot({
