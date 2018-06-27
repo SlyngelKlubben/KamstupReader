@@ -66,18 +66,17 @@ void loop() {
           iState = 0;          
         }
         // if( iVal > 100 ) {
-        if ( 0) {
+        if ( ChangeCount >= 90 ) {
           // wait for WiFi connection
           if((WiFiMulti.run() == WL_CONNECTED)) {
             HTTPClient http;
-            USE_SERIAL.print("[HTTP] begin...\n");
-            // configure traged server and url
             http.begin("http://192.168.0.47:3000/hus/public/tyv"); //HTTP
 
             USE_SERIAL.print("[HTTP] GET...\n");
            // start connection and send HTTP header
            // int httpCode = http.POST("{\"content\":\"YES\"}");
-            sVal = String(iVal);
+            sVal = String(ChangeCount);
+            ChangeCount = 0;
             String myIdent = "\"Sensus620: "  ; // + sVal ;
             String myPre = "{\"content\":" ;
             String myPost = "\"}" ;
