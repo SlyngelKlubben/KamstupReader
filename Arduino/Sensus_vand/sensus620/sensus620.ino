@@ -82,7 +82,7 @@ void loop() {
             String myPost = "\"}" ;
             String myJson = myPre + myIdent + sVal + myPost ;
             USE_SERIAL.print(myJson);
-            int httpCode = 1 ; // http.POST(myJson);
+            int httpCode = http.POST(myJson);
             // httpCode will be negative on error
             if(httpCode > 0) {
               // HTTP header has been send and Server response header has been handled
