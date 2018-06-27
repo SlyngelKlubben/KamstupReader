@@ -21,7 +21,9 @@ int LastVal = 0; // remember last value
 int ChangeCount = 0;
 
 void setup() {
-
+  // initialize digital pin LED_BUILTIN as an output.
+  pinMode(LED_BUILTIN, OUTPUT);
+    
     USE_SERIAL.begin(115200);
    // USE_SERIAL.setDebugOutput(true);
   pinMode(A0, INPUT);     // Initialize A0 for input
@@ -67,6 +69,7 @@ void loop() {
         }
         // if( iVal > 100 ) {
         if ( ChangeCount >= 90 ) {
+          digitalWrite(LED_BUILTIN, LOW);   // turn the LED on (LOW is the voltage level)
           // wait for WiFi connection
           if((WiFiMulti.run() == WL_CONNECTED)) {
             HTTPClient http;
@@ -99,6 +102,7 @@ void loop() {
 
             http.end();
             }
+          digitalWrite(LED_BUILTIN, HIGH);   // turn the LED off (HIGH is the voltage level)
         }else {
            USE_SERIAL.print(sVal);
         }
