@@ -19,7 +19,7 @@ library(lubridate)
 library(lattice)
 library(futile.logger)
 
-flog.threshold(TRACE)
+flog.threshold(DEBUG)
 
 GetRestData <- function(uri="http://192.168.0.47:3000/hus/public/tyv") {
   d1 <- GET(uri)
@@ -41,17 +41,19 @@ con <- dbConnect(RPostgreSQL::PostgreSQL(),dbname = 'hus',
                  user = 'jacob',
                  password = 'jacob')
 
+last <- function(x) x[length(x)]
 
 GetPgData <- function(db=con){
   stm <- sprintf("select * from tyv;")
-  flog.trace("Get data...")
+  flog.debug("Get data...")
   d1 <- dbGetQuery(conn=db, statement=stm)  
-  flog.trace("... done")
+  flog.debug("... done")
   Pat <- '^(\\S+)\\s+(\\d+)$'
   d2 <- transform(d1, Source=sub(Pat,'\\1',as.character(content)), Value=as.numeric(sub(Pat,'\\2',as.character(content))), Time=ymd_hms(timestamp))
   d3 <-   plyr::arrange(d2, Time)  
-  d5 <- transform(d3, TimeDiff=c(NA, diff(Time)))
-  d6 <- transform(d5, perMinute=60*60/TimeDiff)
+  d5 <- ddply(d3, ~ Source, transform, TimeDiff=c(NA, diff(Time)))
+  d6 <- transform(d5, perMinute=60*60/TimeDiff, KamstrupW=60*60/TimeDiff, SensusLperMin=60/TimeDiff) ## Kamstrup 1/Wh, Water 1 per L
+  flog.debug("Last Timepoint: %s", tail(d6,1)$Time)
   d6
 }
 
@@ -89,6 +91,7 @@ ui <- dashboardPage(
   ),
   dashboardBody(
     # Boxes need to be put in a row (or column)
+
     fluidRow(
         valueBoxOutput("CurrentW"),
         valueBoxOutput("CurrentTime")
@@ -97,7 +100,11 @@ ui <- dashboardPage(
       box(plotOutput("PlotAllData", height = 250))
       ,box(plotOutput("PlotLastHour", height = 250))
       ,box(plotOutput("PlotDay", height = 250))
+    ),
+    fluidRow(
+        box(plotOutput("PlotWaterDay", height = 250))
     )
+
   )
 )
 # Define server logic required to draw a histogram
@@ -136,7 +143,11 @@ server <- function(input, output,session) {
     output$PlotDay <- renderPlot({
       with(subset(LiveData(), as.Date(Time) == input$CenterDate), xyplot(perMinute~Time, scales=list(rot=90), type=c('h','p'), main=sprintf("Power Consuption (W). Date: %s",input$CenterDate)))
     })
-    
+
+    output$PlotWaterDay <- renderPlot({
+        with(tail(subset(LiveData(), Source=='Sensus620:'),100), xyplot(SensusLperMin~Time, scales=list(rot=90), type=c('h','p'), main=sprintf("Water flow (L/min)")))
+    })
+
    
 }
 
