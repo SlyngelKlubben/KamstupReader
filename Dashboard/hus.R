@@ -1,6 +1,6 @@
-library(RPostgreSQL)
-drv <- dbDriver("PostgreSQL")
-con <- dbConnect(drv, dbname="hus", host="192.168.0.47",user="jacob",password="jacob")
+## library(RPostgreSQL)
+## drv <- dbDriver("PostgreSQL")
+## con <- dbConnect(drv, dbname="hus", host="192.168.0.47",user="jacob",password="jacob")
 
 library(jsonlite)
 library(httr)
