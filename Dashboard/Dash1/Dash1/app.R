@@ -19,7 +19,7 @@ library(lubridate)
 library(lattice)
 library(futile.logger)
 
-GetData <- function(uri="http://192.168.0.47:3000/hus/public/tyv") {
+GetRestData <- function(uri="http://192.168.0.47:3000/hus/public/tyv") {
   d1 <- GET(uri)
   d2 <- content(d1)
   d3 <- ldply(d2, as.data.frame)
@@ -30,7 +30,28 @@ GetData <- function(uri="http://192.168.0.47:3000/hus/public/tyv") {
   plyr::arrange(d6, Time)  
 }
 
-if(TRUE) { ## Use canned data
+require(RPostgres)
+library(DBI)
+# Connect to a specific postgres database i.e. Heroku
+con <- dbConnect(RPostgres::Postgres(),dbname = 'hus', 
+                 host = '192.168.0.47', 
+                 port = 5432, 
+                 user = 'jacob',
+                 password = 'jacob')
+
+
+GetPgData <- function(db=con){
+  stm <- sprintf("select * from tyv;")
+  d1 <- dbGetQuery(conn=db, statement=stm)  
+  Pat <- '^(\\S+)\\s+(\\d+)$'
+  d2 <- transform(d1, Source=sub(Pat,'\\1',as.character(content)), Value=as.numeric(sub(Pat,'\\2',as.character(content))), Time=ymd_hms(timestamp))
+  d3 <-   plyr::arrange(d2, Time)  
+  d5 <- transform(d3, TimeDiff=c(NA, diff(Time)))
+  d6 <- transform(d5, perMinute=60*60/TimeDiff)
+  d6
+}
+
+if(FALSE) { ## Use canned data
     GetData <- function(uri="") {
         d6 <- read.csv("data1_2018-05-23.csv")
         d6 <- plyr::arrange(transform(d6, Time=ymd_hms(Time)), Time)
@@ -41,12 +62,16 @@ if(TRUE) { ## Use canned data
     }
 }
 
+GetData <-GetPgData
+
 flog.debug("Data aquired")
 
 ## with(subset(d5), xyplot(Value~Time, scales=list(rot=90), type=c('h','p')))
 ## with(subset(d6, id>5300), xyplot(perMinute~Time, scales=list(rot=90), type=c('h','p'), main="Strømforbrug i W"))
 
-
+d0 <- GetData()
+DateMin <- min(as.Date(d0$Time))
+DateMax <- max(as.Date(d0$Time))
 
 
 # Define UI for application that draws a histogram
@@ -65,8 +90,9 @@ ui <- dashboardPage(
         valueBoxOutput("CurrentTime")
     ),
     fluidRow(
-      box(plotOutput("PlotAllData", height = 250)),
-      box(plotOutput("PlotLastHour", height = 250))
+      box(plotOutput("PlotAllData", height = 250))
+      ,box(plotOutput("PlotLastHour", height = 250))
+      ,box(plotOutput("PlotDay", height = 250))
     )
   )
 )
@@ -79,7 +105,8 @@ server <- function(input, output,session) {
   #     flog.debug("Clicked!")
   # })
   
-    myTimer <- reactiveTimer(1000)
+    Now <- Sys.time()
+    myTimer <- reactiveTimer(10000)
     
     LiveData <- eventReactive(myTimer(), {
         GetData()
@@ -94,13 +121,17 @@ server <- function(input, output,session) {
         valueBox(format(Sys.time()), "Current Time", color="light-blue")})    
     
     output$PlotAllData <- renderPlot({
-        with(subset(LiveData()), xyplot(perMinute~Time, scales=list(rot=90), type=c('h','p'), main="Power Consuption. All (W)"))
+        with(subset(LiveData()), xyplot(perMinute ~ Time, scales=list(rot=90), type=c('h','p'), main="Power Consuption. All (W)"))
     })
     
     output$PlotLastHour <- renderPlot({
-        with(subset(LiveData(), Now - Time < 60*input$slider), xyplot(perMinute~Time, scales=list(rot=90), type=c('h','p'), main=sprintf("Power Consuption. Last %s minutes (W)",input$slider)))
+      with(subset(LiveData(), Now - Time > 60*input$slider), xyplot(perMinute~Time, scales=list(rot=90), type=c('h','p'), main=sprintf("Power Consuption. Last %s minutes (W)",input$slider)))
     })
-  
+    
+    output$PlotDay <- renderPlot({
+      with(subset(LiveData(), as.Date(Time) == input$CenterDate), xyplot(perMinute~Time, scales=list(rot=90), type=c('h','p'), main=sprintf("Power Consuption (W). Date: %s",input$CenterDate)))
+    })
+    
    
 }
 
