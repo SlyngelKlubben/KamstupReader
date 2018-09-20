@@ -20,6 +20,16 @@ String sVal = "";
 int LastVal = 0; // remember last value
 int ChangeCount = 0;
 
+int j=0;
+int i=0;
+
+int MaxValue = 0;     // Max value for setup 
+int MinValue = 255;   // Min value for setup
+
+int Upper = 120 ;
+int Lower = 100 ;
+
+
 void setup() {
   // initialize digital pin LED_BUILTIN as an output.
   pinMode(LED_BUILTIN, OUTPUT);
@@ -36,17 +46,46 @@ void setup() {
         USE_SERIAL.printf("[SETUP] WAIT %d...\n", t);
         USE_SERIAL.flush();
         delay(1000);
+        
     }
 
-//    WiFiMulti.addAP("Viggo", "Mallebr0k");
-    WiFiMulti.addAP("UniFiHome", "thorhauge");
+    WiFiMulti.addAP("Viggo", "Mallebr0k");
+  //  WiFiMulti.addAP("UniFiHome", "thorhauge");
+
+ for(int j=0; j <= 50; j++) {
+
+   for(int i=0; i <= 255; i++) {
+      int iVal = analogRead(A0); // read sensor
+      if ( iVal > MaxValue) {MaxValue=iVal;}
+      if ( iVal < MinValue) {MinValue=iVal;}
+   }
+
+   USE_SERIAL.print("Max Value found = ");
+   USE_SERIAL.print(MaxValue);
+   USE_SERIAL.print(" and Min Value found = ");
+   USE_SERIAL.println(MinValue);
+ }
+  
+   Upper = MaxValue-(MaxValue-MinValue)/3; 
+   Lower = MinValue+(MaxValue-MinValue)/3;
+
+   USE_SERIAL.print("Upper value = ");
+   USE_SERIAL.print(Upper);
+   USE_SERIAL.print(" and Lower value = ");
+   USE_SERIAL.println(Lower);
+
 
 }
 
-int Upper = 210 ;
-int Lower = 190 ;
+
+
+
+//int Upper = 120 ;
+//int Lower = 100 ;
 String State = "low";
 int iState = 0; // 0 low
+
+
 
 void loop() {
         int iVal = analogRead(A0); // read sensor
@@ -108,4 +147,3 @@ void loop() {
         }
     delay(0);
 }
-
