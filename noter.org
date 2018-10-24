@@ -1,0 +1,227 @@
+* Hus
+** Jacob
+raspberry: 192.168.0.47
+jacob jacob
+
+Setting static IP:
+https://www.modmypi.com/blog/how-to-give-your-raspberry-pi-a-static-ip-address-update
+
+
+** Github
+https://github.com/SlyngelKlubben/KamstupReader.git
+
+** raspberry
+add user to group staff
+
+** prest
+~jacob/prest-linux-arm-7 
+https://postgres.rest/
+
+** shiny
+export LC_ALL=C.UTF-8
+packages:
+ - yaml
+ - futile.logger
+
+*** packages
+library(shiny)
+library(shinydashboard)
+
+
+## Get data
+library(jsonlite)
+library(httr)
+library(plyr)
+library(lubridate)
+library(lattice)
+library(futile.logger)
+
+wajig install r-cran-httr r-cran-plyr r-cran-dplyr r-cran-lubridate r-cran-futile.logger 
+** Arduino
+Ubuntu 18.04. needs to be in group "dialout" (needs reboot!)
+** Software
+Can we use Domoticz  https://www.domoticz.com/wiki/Main_Page ?
+
+* Configuration
+- slyngel: jacob
+- wifi:
+  - ssid: UniFiHome
+  - pw: thorhauge
+- sensors:
+  - kamstrup:
+    - key: Kamstrup
+    - type: El
+  - sensus:
+    - key: Sensus
+    - type: Vand
+- prest:
+  - host: 127.0.0.1 ## in prest.toml
+  - port: 3000 ## listen on
+- raspberry:
+  - ip: 192.168.0.47 ## in  /etc/dhcpcd.conf see https://www.modmypi.com/blog/how-to-give-your-raspberry-pi-a-static-ip-address-update
+  - user: jacob
+  - pw: jacob
+- db: ## postgres and prest.toml
+  - rdms: postgres
+  - port: 5432 
+  - db: hus 
+  - user: jacob
+  - pw: jacob
+  - schema: public
+  - table: tyv
+* Raspberry Pi Setup
+  - Download the Raspbian lite image from here: https://www.raspberrypi.org/downloads/raspbian/
+    Raspbian Stretch Lite
+    Minimal image based on Debian Stretch
+    Version: October 2018
+    Release date: 2018-10-09
+    Kernel version: 4.14
+    Release notes: Link
+    Download Torrent
+    Download ZIP
+    SHA-256: 98444134e98cbb27e112f68422f9b1a42020b64a6fd29e2f6e941a3358d171b4
+  - Copy image onto SD card
+    On my system the 32 GB SD card shows up as /dev/mmcblk0p1 (in the SD-card-reader)
+    To copy the mage, do
+    > sudo dd if=2018-10-09-rasperian-strech-lite.img of=/dev/mmcblk0 ## the device, not /dev/mmcblk0p1 (the partition)
+  - Configure wifi
+    Following https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md
+    sudo emacs /media/tp/root/etc/wpa_supplicant/wpa_supplicant.conf
+      pi@pi3:~ $ cat /etc/wpa_supplicant/wpa_supplicant.conf
+      ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+      update_config=1
+      country=DK      
+      network={
+      	ssid="TelenorC04AFB"
+      	psk="CEA530B3C2"
+      }
+   - Configure static IP (10.0.0.234 in my case)
+     Following https://www.raspberrypi.org/learning/networking-lessons/rpi-static-ip-address/
+     sudo emacs /media/tp/root/etc/dhcpcd.conf 
+     pi@pi3:~ $ tail /etc/dhcpcd.conf      
+     interface wlan0
+     static ip_address=10.0.0.234/24
+     static routers=10.0.0.1
+     static domain_name_servers=10.0.0.1
+   - Enable ssh
+     Following  https://www.raspberrypi.org/documentation/remote-access/ssh/ section 3: Enable SSH on a headless Raspberry Pi (add file to SD card on another machine)
+     to enable ssh: create empty file called ssh in boot:
+     > touch /media/tp/boot/ssh
+   - log in
+     ssh pi@10.0.0.234 pw raspberry
+   - other config
+     pi@pi3:~ $ sudo raspi-config 
+     Set hostmane: pi3
+* Package installation
+** Postgres server
+   sudo apt install postgresql-9.6  
+** Postgres client
+   sudo apt install postgresql-client-9.6
+   ## Was already installed. Probably taken in by server
+** pREST
+   wget https://github.com/prest/prest/releases/download/v0.3.0/prest-linux-arm-7
+*** TODO Move to app-folder
+    This executable should to into the app folder
+** R, shiny and packages
+   sudo apt install r-base
+   sudo apt install r-cran-lattice ## already there
+   sudo apt install r-cran-shiny r-cran-shinybs
+   sudo apt install  r-cran-ggplot2
+   sudo apt install  r-cran-cairo
+   ?? r-cran-htmlwidgets
+** Dev help
+   This should not be needed for app function
+   sudo apt install emacs25 ess
+* App organization
+** Install folder
+   /opt/husvåge
+** Test app
+*** DONE shiny test
+    library(Shiny)
+    runExample("01_hello", host="0.0.0.0", launch.browser=FALSE,display.mode="normal")
+    No graphics shown :-(
+    *OBS* shiny is broken on raspberry
+    Perhaps write this somewhere?
+**** debugging graphics
+    This comment     https://github.com/rstudio/shiny-server/issues/268#issuecomment-289657191 suggests using
+    options(shiny.usecairo=TRUE)
+    OP reports https://github.com/rstudio/shiny-server/issues/268#issuecomment-407332993
+    library(Cairo)
+    options(shiny.usecairo=TRUE)
+    solved my problem!
+    But does not help on the runExample()
+    His issue is about shiny server, and he says he can run it from R-seesion correctly
+    - Addong options(shiny.usecairo=TRUE) to sercer.R does not help
+      see ~/TestApp/TestShiny/01_hello/server.R
+**** DONE It's not graphics, it's jquery
+     Check the source of runExample("01_hello"):
+       <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>  <script type="application/shiny-singletons"></script>  <script type="application/html-dependencies">json2[2014.02.04];jquery[1.12.4];shiny[1.0.5];jqueryui[1.12.1];showdown[0.3.1];highlight.js[6.2];ionrangeslider[2.1.6];strftime[0.9.2];bootstrap[3.3.7];font-awesome[4.7.0]</script><script src="shared/json2-min.js"></script>
+      <script src="shared/jquery.min.js"></script>
+      <link href="shared/shiny.css" rel="stylesheet" />
+      <script src="shared/shiny.min.js"></script>
+      <script src="shared/jqueryui/jquery-ui.min.js"></script>
+      <script src="shared/showdown/compressed/showdown.js"></script>
+      <script src="shared/highlight/highlight.pack.js"></script>
+      <link href="shared/ionrangeslider/css/ion.rangeSlider.css" rel="stylesheet" />
+      <link href="shared/ionrangeslider/css/ion.rangeSlider.skinShiny.css" rel="stylesheet" />
+      <script src="shared/ionrangeslider/js/ion.rangeSlider.min.js"></script>
+      <script src="shared/strftime/strftime-min.js"></script>
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <link href="shared/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+      <script src="shared/bootstrap/js/bootstrap.min.js"></script>
+      <script src="shared/bootstrap/shim/html5shiv.min.js"></script>
+      <script src="shared/bootstrap/shim/respond.min.js"></script>
+      <link href="shared/font-awesome/css/font-awesome.min.css" rel="stylesheet" />  <script src="shared/shiny-showcase.js"></script>
+        <link rel="stylesheet" type="text/css" href="shared/highlight/rstudio.css"/>
+        <link rel="stylesheet" type="text/css" href="shared/shiny-showcase.css"/>
+        <script type="text/markdown" id="showcase-markdown-content">This small Shiny application demonstrates Shiny's automatic UI updates. 
+ 
+     Of these those under shared/jqueryui and shared/bootstrap don't work
+     These are symlinks on the raspberrypi from /usr/lib/R/site-library/shiny to /usr/share/javascript/jquery-ui/ etc
+     
+     Apparently Shiny has a problem with symlinks: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=867963
+     This is fixed in a version after shiny 1.0.5+dfsg-1, but rpi has version 1.0.0
+
+     It might not be so easy to just add the debian package:
+     https://www.raspbian.org/RaspbianFAQ#Can_I_mix_packages_from_the_Debian_repositories_with_Raspbian.3F
+     
+     *solved* This is indeed the problem
+     A quick fix:
+     sudo mv shiny shiny_orig
+     pi@pi3:/usr/lib/R/site-library $ sudo mv shiny shiny_orig
+     pi@pi3:/usr/lib/R/site-library $ sudo mkdir shiny
+     pi@pi3:/usr/lib/R/site-library $ sudo rsync -aL shiny_orig/ shiny/
+
+     Now it works!
+
+     ? should I undo all the other stuff I did ?
+
+*** Install Xorg to see if it helps
+    sudo apt install xorg
+*** DONE graphics test
+    > png(file="plot01.png")
+    > xyplot(Sepal.Length ~ Sepal.Width, data =iris)
+    > dev.off()
+  - Sending computer: tar -cz . | nc -q 10 -l -p 45454
+  - Recieving: nc -w 10 $REMOTE_HOST 45454 | tar -xz
+    plot is generated fine
+*** shiny server?
+    - Here is report of shiny server runnig on RP3: https://github.com/rstudio/shiny-server/issues/268
+      He has the x11 / Cairo issue
+    - Detailed instructions on compiling shiny server for RP3
+      https://steemit.com/tutorial/@m4rk.h4nn4/how-to-install-and-run-shiny-server-on-the-raspberry-pi-3-and-raspian-jassie-lite
+    - extra packages:
+      - sudo apt install cmake
+      - sudo apt install libcurl4-openssl-dev
+      - sudo apt install default-jre default-jdk
+      
+**** compile R
+     ./configure --with-x=no --enable-R-shlib --prefix=/opt/R/R-3.5.1
+**** compile shiny
+     package "later" fails with loads to errors
+     warning: ‘template<class> class std::auto_ptr’ is deprecated 
+     This comment arning: ‘template<class> class std::auto_ptr’ is deprecated 
+     advices setting compilerflag -DBOOST_NO_AUTO_PTR
+     export CFLAGS='-DBOOST_NO_AUTO_PTR' does not wokr
+     
+
