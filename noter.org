@@ -69,6 +69,46 @@ Can we use Domoticz  https://www.domoticz.com/wiki/Main_Page ?
   - pw: jacob
   - schema: public
   - table: tyv
+* Postgres
+** User: Jacob
+sudo su - postgres
+postgres@pi3:~$ createuser jacob
+** Database: hus
+postgres@pi3:~$ createdb hus -O jacob
+postgres@pi3:~$ psql
+postgres=# alter role jacob login password 'jacob';
+postgres=# grant all on database hus to jacob;
+
+Add to /etc/postgresql/9.6/main/pg_hba.conf 
+# "local" is for Unix domain socket connections only                                                                                                                                                        
+#local   all             all                                     peer                                                                                                                                       
+local   all             all                                     md5
+** Table tyv
+// Log in as jacob
+// create table tyv
+hus=# create table tyv();
+hus=# alter table tyv add id serial;
+hus=# alter table tyv add timestamp timestamp default current_timestamp;
+hus=# alter table tyv add content text;
+** Test
+curl -d '{"content":"DetVirker"}' -H "Content-Type: application/json" -X POST http://192.168.0.200:3000/hus/public/tyv
+** dump database
+curl  -H "Content-Type: application/json" -X GET http://192.168.0.200:3000/hus/public/tyv
+*** dump to csv
+ref: https://stackoverflow.com/questions/32960857/how-to-convert-arbirtrary-simple-json-to-csv-using-jq
+curl  -H "Content-Type: application/json" -X GET http://192.168.0.200:3000/hus/public/tyv | \
+ jq -r '(map(keys)  | add | unique) as $cols | map(. as $row | $cols | map($row[.])) as $rows | $cols, $rows[] | @csv'
+See System/probe.sh
+** Debugging:
+*** List databases
+\l
+*** List schemas
+\dn
+*** List tables
+\dt
+*** List columns
+\d tyv
+
 * Raspberry Pi Setup
   - Download the Raspbian lite image from here: https://www.raspberrypi.org/downloads/raspbian/
     Raspbian Stretch Lite
