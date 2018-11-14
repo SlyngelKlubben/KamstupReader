@@ -70,9 +70,15 @@ Can we use Domoticz  https://www.domoticz.com/wiki/Main_Page ?
   - schema: public
   - table: tyv
 * Postgres
+postgres.conf: listen on "*"
+# IPv4 local connections:
+host	all         	all         	127.0.0.1/32        	trust
+host	all         	all         	0.0.0.0/0           	md5
+
 ** User: Jacob
 sudo su - postgres
 postgres@pi3:~$ createuser jacob
+ALTER USER jacob WITH ENCRYPTED PASSWORD 'jacob';
 ** Database: hus
 postgres@pi3:~$ createdb hus -O jacob
 postgres@pi3:~$ psql
@@ -95,6 +101,7 @@ curl -d '{"content":"DetVirker"}' -H "Content-Type: application/json" -X POST ht
 ** dump database
 curl  -H "Content-Type: application/json" -X GET http://192.168.0.200:3000/hus/public/tyv
 *** dump to csv
+## Needs curl, jq
 ref: https://stackoverflow.com/questions/32960857/how-to-convert-arbirtrary-simple-json-to-csv-using-jq
 curl  -H "Content-Type: application/json" -X GET http://192.168.0.200:3000/hus/public/tyv | \
  jq -r '(map(keys)  | add | unique) as $cols | map(. as $row | $cols | map($row[.])) as $rows | $cols, $rows[] | @csv'
