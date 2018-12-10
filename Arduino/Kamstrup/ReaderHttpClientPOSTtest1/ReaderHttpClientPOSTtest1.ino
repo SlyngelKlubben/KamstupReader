@@ -19,7 +19,9 @@ ESP8266WiFiMulti WiFiMulti;
 String sVal = "";
 
 void setup() {
-
+  // initialize digital pin LED_BUILTIN as an output.
+  pinMode(LED_BUILTIN, OUTPUT);
+  
     USE_SERIAL.begin(115200);
    // USE_SERIAL.setDebugOutput(true);
   pinMode(A0, INPUT);     // Initialize A0 for input
@@ -43,6 +45,7 @@ void loop() {
         int iVal = analogRead(A0); // read sensor
         if( iVal > 100 ) {
           // wait for WiFi connection
+          digitalWrite(LED_BUILTIN, LOW);   // turn the LED on (LOW is the voltage level)
           if((WiFiMulti.run() == WL_CONNECTED)) {
             HTTPClient http;
             USE_SERIAL.print("[HTTP] begin...\n");
@@ -75,9 +78,9 @@ void loop() {
 
             http.end();
             }
+          digitalWrite(LED_BUILTIN, HIGH);   // turn the LED off (HIGH is the voltage level)
         }else {
            USE_SERIAL.print(sVal);
         }
     delay(10);
 }
-
