@@ -172,9 +172,11 @@ See System/probe.sh
 ** R, shiny and packages
    sudo apt install r-base
    sudo apt install r-cran-lattice ## already there
-   sudo apt install r-cran-shiny r-cran-shinybs
+   sudo apt install r-cran-shiny r-cran-shinybs r-cran-shinydashboard
    sudo apt install  r-cran-ggplot2
    sudo apt install  r-cran-cairo
+   r-cran-yaml 
+   RPostgreSQL, DBI, futile.logger, lubridate, magrittr, plyr
    ?? r-cran-htmlwidgets
 ** Dev help
    This should not be needed for app function
@@ -271,4 +273,7 @@ See System/probe.sh
      advices setting compilerflag -DBOOST_NO_AUTO_PTR
      export CFLAGS='-DBOOST_NO_AUTO_PTR' does not wokr
      
+
+* Tools
+getDat.R: dump all data from Kamstrup
 
