@@ -17,23 +17,16 @@
 ESP8266WiFiMulti WiFiMulti;
 
 String sVal = "";
-int LastVal = 0; // remember last value
-int ChangeCount = 0;
-
-int j=0;
-int i=0;
-
-int MaxValue = 0;     // Max value for setup 
-int MinValue = 255;   // Min value for setup
-
-int Upper = 120 ;
-int Lower = 100 ;
-
+int SensorMaxValue=0;
+int SensorMinValue=255;
+int iState = 1; 
+int CycleCount = 1;
+int LoopCountInState=0;
 
 void setup() {
   // initialize digital pin LED_BUILTIN as an output.
   pinMode(LED_BUILTIN, OUTPUT);
-    
+  
     USE_SERIAL.begin(115200);
    // USE_SERIAL.setDebugOutput(true);
   pinMode(A0, INPUT);     // Initialize A0 for input
@@ -46,79 +39,95 @@ void setup() {
         USE_SERIAL.printf("[SETUP] WAIT %d...\n", t);
         USE_SERIAL.flush();
         delay(1000);
-        
     }
 
-    WiFiMulti.addAP("Viggo", "Mallebr0k");
-  //  WiFiMulti.addAP("UniFiHome", "thorhauge");
+//    WiFiMulti.addAP("Viggo", "Mallebr0k");
+    WiFiMulti.addAP("UniFiHome", "thorhauge");
 
- for(int j=0; j <= 50; j++) {
-
-   for(int i=0; i <= 255; i++) {
-      int iVal = analogRead(A0); // read sensor
-      if ( iVal > MaxValue) {MaxValue=iVal;}
-      if ( iVal < MinValue) {MinValue=iVal;}
-   }
-
-   USE_SERIAL.print("Max Value found = ");
-   USE_SERIAL.print(MaxValue);
-   USE_SERIAL.print(" and Min Value found = ");
-   USE_SERIAL.println(MinValue);
- }
-  
-   Upper = MaxValue-(MaxValue-MinValue)/3; 
-   Lower = MinValue+(MaxValue-MinValue)/3;
-
-   USE_SERIAL.print("Upper value = ");
-   USE_SERIAL.print(Upper);
-   USE_SERIAL.print(" and Lower value = ");
-   USE_SERIAL.println(Lower);
 
 
 }
 
-
-
-
-//int Upper = 120 ;
-//int Lower = 100 ;
-String State = "low";
-int iState = 0; // 0 low
-
-
-
 void loop() {
         int iVal = analogRead(A0); // read sensor
-          String OutStr1 = String(iVal);
-          String OutStr2 = String(ChangeCount);
-          String OutStr3 = String(LastVal);
-          String oState = String(iState);
-          String OutStr4 = "Nu:" + OutStr1 + ". Last: " + OutStr3 + ". ChangeCount: " + OutStr2 + " State: " + oState + "\n" ;
-          USE_SERIAL.print(OutStr4);
-          if ( iVal > Upper && iState == 0) {
-          ChangeCount = ChangeCount + 1;
-          iState = 1;
-//          OutStr2 = String(ChangeCount);
-//          OutStr3 = OutStr1 + ": " + OutStr2 + "\n" ;
-//          USE_SERIAL.print(OutStr3);
+        if ( iVal > SensorMaxValue) {SensorMaxValue=iVal;}
+        if ( iVal < SensorMinValue) {SensorMinValue=iVal;}
+        
+        LoopCountInState=LoopCountInState+1;
+        int ThresholdUpper = SensorMaxValue-(SensorMaxValue-SensorMinValue)/3; 
+        int ThresholdLower = SensorMinValue+(SensorMaxValue-SensorMinValue)/3;      
+        
+        if ( iVal > ThresholdUpper && iState == 0) {   // If High but in Low state
+          CycleCount = CycleCount + 1;
+          iState = 1;                         // Now in High state
+          LoopCountInState=0;
         }
-        if ( iVal < Lower && iState == 1) {
-          // ChangeCount = ChangeCount + 1;
-          iState = 0;          
-        }
-        // if( iVal > 100 ) {
-        if ( ChangeCount >= 90 ) {
-          digitalWrite(LED_BUILTIN, LOW);   // turn the LED on (LOW is the voltage level)
+  
+        if ( iVal < ThresholdLower && iState == 1) {   // If Low but in High state
+          // CycleCount = CycleCount + 1;   // Not changed - Full cycle only at High state
+          iState = 0;                         // Now in Low state 
+              USE_SERIAL.println("L");
+          LoopCountInState=0;
+        } 
+        
+if (LoopCountInState >= 60000 ) { // 1 loop = 10 ms, 1 hour = 100*60*60 loops , 1 hour = less than 6 ml leak/hour - ready to submit no change to database - if missing = slow leak probability
           // wait for WiFi connection
+          digitalWrite(LED_BUILTIN, LOW);   // turn the LED on (LOW is the voltage level)
           if((WiFiMulti.run() == WL_CONNECTED)) {
             HTTPClient http;
+            USE_SERIAL.print("[HTTP] begin...\n");
+            // configure traged server and url
             http.begin("http://192.168.0.47:3000/hus/public/tyv"); //HTTP
 
             USE_SERIAL.print("[HTTP] GET...\n");
            // start connection and send HTTP header
            // int httpCode = http.POST("{\"content\":\"YES\"}");
-            sVal = String(ChangeCount);
-            ChangeCount = 0;
+            sVal = String(LoopCountInState) + " Last cycle count: " + String(CycleCount);
+            LoopCountInState = 0;
+            SensorMinValue=SensorMinValue+1; // To avoid drift over time = increase stability of reading
+            SensorMaxValue=SensorMaxValue-1; // To avoid drift over time = increase stability of reading
+            String myIdent = "\"WaterLeakTest: "  ; // + sVal ;
+            String myPre = "{\"content\":" ;
+            String myPost = "\"}" ;
+            String myJson = myPre + myIdent + sVal + myPost ;
+            USE_SERIAL.print(myJson);
+            int httpCode = http.POST(myJson);
+            // httpCode will be negative on error
+            if(httpCode > 0) {
+              // HTTP header has been send and Server response header has been handled
+              USE_SERIAL.printf("[HTTP] GET... code: %d\n", httpCode);
+
+              // file found at server
+              if(httpCode == HTTP_CODE_OK) {
+                  String payload = http.getString();
+                  USE_SERIAL.println(payload);
+              }
+            } else {
+              USE_SERIAL.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+            }
+
+            http.end();
+            }
+          digitalWrite(LED_BUILTIN, HIGH);   // turn the LED off (HIGH is the voltage level)
+        }
+
+
+        
+ if (CycleCount >= 9 ) {               // 90 cycles = 1 liter used = ready to submit to database       
+
+          // wait for WiFi connection
+          digitalWrite(LED_BUILTIN, LOW);   // turn the LED on (LOW is the voltage level)
+          if((WiFiMulti.run() == WL_CONNECTED)) {
+            HTTPClient http;
+            USE_SERIAL.print("[HTTP] begin...\n");
+            // configure traged server and url
+            http.begin("http://192.168.0.47:3000/hus/public/tyv"); //HTTP
+
+            USE_SERIAL.print("[HTTP] GET...\n");
+           // start connection and send HTTP header
+           // int httpCode = http.POST("{\"content\":\"YES\"}");
+            sVal = String(CycleCount);
+            CycleCount = 0;
             String myIdent = "\"Sensus620: "  ; // + sVal ;
             String myPre = "{\"content\":" ;
             String myPost = "\"}" ;
@@ -142,8 +151,6 @@ void loop() {
             http.end();
             }
           digitalWrite(LED_BUILTIN, HIGH);   // turn the LED off (HIGH is the voltage level)
-        }else {
-           USE_SERIAL.print(sVal);
         }
-    delay(0);
+    delay(10); // A delay of 10 milliseconds or more is needed otherwise the wifi loop will cause refuse wifi connection periodically
 }
