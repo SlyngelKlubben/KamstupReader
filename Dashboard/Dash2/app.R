@@ -11,7 +11,7 @@ t1 <- dev.last(limit=10)
 ## Config. Read from yaml
 library(yaml)
 C1 <- list(slyngel="jacob",sensors=list(kamstrup=list(key="Kamstrup",type="El"), Sensus=list(key="Sensus620", type="Vand")))
-Conf <- yaml.load_file("config.jacob")
+Conf <- yaml.load_file("../../config.jacob")
 
 
 ## Shiny app
