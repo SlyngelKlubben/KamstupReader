@@ -169,6 +169,8 @@ See System/probe.sh
    wget https://github.com/prest/prest/releases/download/v0.3.0/prest-linux-arm-7
 *** TODO Move to app-folder
     This executable should to into the app folder
+** git
+
 ** R, shiny and packages
    sudo apt install r-base
    sudo apt install r-cran-lattice ## already there
@@ -271,9 +273,22 @@ See System/probe.sh
      warning: ‘template<class> class std::auto_ptr’ is deprecated 
      This comment arning: ‘template<class> class std::auto_ptr’ is deprecated 
      advices setting compilerflag -DBOOST_NO_AUTO_PTR
-     export CFLAGS='-DBOOST_NO_AUTO_PTR' does not wokr
+     export CFLAGS='-DBOOST_NO_AUTO_PTR' does not work
      
+* Installation on raspberry-pi
+- clone repo:
+  git clone https://github.com/SlyngelKlubben/KamstupReader.git
+- put prest and config in /opt/Prest
+  /opt/Prest/prest-linux-arm-7
+  cp prest.toml /opt/Prest
+- Add line to /etc.rc.local:
+  ## Run pRest server
+  cd /opt/Prest && ./prest-linux-arm-7 > /opt/Prest/prest.log &
 
 * Tools
-getDat.R: dump all data from Kamstrup
-
+- Dash2/getDat.R: dump all data from Kamstrup
+- System/probe.sh IP: dump data as csv
+  Needs sudo apt install jq
+  bash ./probe.sh 10.0.0.234
+- System/simulate.R: add data to database
+  Rscript Rscript simulate.R -i 10.0.0.234
