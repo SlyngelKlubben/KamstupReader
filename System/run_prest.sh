@@ -1,3 +1,2 @@
 #! /bin/bash
-cd /home/jacob
-./prest-linux-arm-7 > prest.log
+/opt/Prest/prest-linux-arm-7 > /opt/Prest/prest.log
