@@ -29,3 +29,4 @@ db: ## postgres and prest.toml
   pw: jacob
   schema: public
   table: tyv
+  host: 10.0.0.234

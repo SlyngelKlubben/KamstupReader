@@ -3,21 +3,23 @@
 ### Front-page: current values for each reader
 ### Detail-pages as tabs
 ### Detail pages: last day, week, month, year (not as dynamic)
-source("lib.R")
 ## test
-pg.new()
-t1 <- dev.last(limit=10)
+## source("lib.R")
+## pg.new()
+## t1 <- dev.last(limit=10)
 
 ## Config. Read from yaml
 library(yaml)
 C1 <- list(slyngel="jacob",sensors=list(kamstrup=list(key="Kamstrup",type="El"), Sensus=list(key="Sensus620", type="Vand")))
-Conf <- yaml.load_file("../../config.jacob")
-
+Conf <- yaml.load_file("config.local") ## add symlink locally
+source("lib.R")
+pg.new(Conf)
 
 ## Shiny app
 library(shiny)
 library(shinydashboard)
 library(glue)
+library(magrittr)
 
 ui <- dashboardPage(
     title= "Dashing Dash"
