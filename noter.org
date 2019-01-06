@@ -72,6 +72,7 @@ Can we use Domoticz  https://www.domoticz.com/wiki/Main_Page ?
 * Postgres
 postgres.conf: listen on "*"
 # IPv4 local connections:
+pg_hba.conf:
 host	all         	all         	127.0.0.1/32        	trust
 host	all         	all         	0.0.0.0/0           	md5
 
@@ -178,15 +179,22 @@ See System/probe.sh
    sudo apt install  r-cran-ggplot2
    sudo apt install  r-cran-cairo
    r-cran-yaml 
-   RPostgreSQL, DBI, futile.logger, lubridate, magrittr, plyr
+   r-cran-rpostgresql 
+   r-cran-dbi
    ?? r-cran-htmlwidgets
+*** On PC R-3.5.0 from source
+   RPostgreSQL, DBI, futile.logger, lubridate, magrittr, plyr
+   libpq-dev need i installing RPostgreSQL from source
 ** Dev help
    This should not be needed for app function
    sudo apt install emacs25 ess
-* App organization
-** Install folder
+* Dasboard App
+** Proposed organization
+*** Install folder
    /opt/husvåge
 ** Test app
+pi@pi3:~/KamstupReader/Dashboard $ Rscript -e 'shiny::runApp("01_hello", host ="0.0.0.0", launch.browser=FALSE,display.mode="normal")'
+tp@ace:~/2018/Slyngel/KamstupReader/Dashboard/Dash2$ /opt/R/R-3.5.0/bin/Rscript  -e 'shiny::runApp()'
 *** DONE shiny test
     library(Shiny)
     runExample("01_hello", host="0.0.0.0", launch.browser=FALSE,display.mode="normal")
@@ -275,6 +283,12 @@ See System/probe.sh
      advices setting compilerflag -DBOOST_NO_AUTO_PTR
      export CFLAGS='-DBOOST_NO_AUTO_PTR' does not work
      
+** Dashboard App
+link config file
+pi@pi3:~/KamstupReader/Dashboard/Dash2 $ ln -s ../../config.thomas config.local
+shiny::runApp(".", host = "0.0.0.0", launch.browser=FALSE)
+*** Test first
+
 * Installation on raspberry-pi
 - clone repo:
   git clone https://github.com/SlyngelKlubben/KamstupReader.git
