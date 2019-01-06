@@ -30,4 +30,4 @@ RUN apt-get update && apt-get install -y \
   r-cran-dbi
 
 # Run R
-CMD ["R"]
+CMD ["R","--vanilla"]
