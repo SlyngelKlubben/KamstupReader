@@ -366,6 +366,10 @@ docker build -t "slyngel:dash" dashboard/
 
 Then we can possibly deply using shinyproxy
 
+docker run slyngel:latest /bin/bash
+docker ps
+docker exec -it <container name> /bin/bash
+
 *** Docker help
 http://odewahn.github.io/docker-jumpstart/building-images-with-dockerfiles.html
 https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#run
