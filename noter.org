@@ -178,10 +178,49 @@ See System/probe.sh
    sudo apt install r-cran-shiny r-cran-shinybs r-cran-shinydashboard
    sudo apt install  r-cran-ggplot2
    sudo apt install  r-cran-cairo
-   r-cran-yaml 
-   r-cran-rpostgresql 
-   r-cran-dbi
+   sudo apt install r-cran-futile.logger
+   sudo apt install r-cran-lubridate
+   sudo apt install r-cran-yaml r-cran-rpostgresql r-cran-dbi
    ?? r-cran-htmlwidgets
+*** raspberry from source
+R version: 3.3.3
+**** install.packages("shinydashboard")
+***** Silence boost warnings
+Use Makevars from https://github.com/eddelbuettel/bh/issues/57:
+mkdir ~/.R
+cat - > ~/.R/Makevars
+#PEDANTIC=-pedantic -Werror
+PEDANTIC=-Wno-deprecated-declarations
+
+## for C code
+CFLAGS=               -g -O3 -Wall -pipe $(PEDANTIC) -Wno-unused -std=gnu99 -march=native
+#CFLAGS=               -O3 -g0 -Wall -pipe $(PEDANTIC) -std=gnu99 -I/usr/local/cuda/include
+
+## for C++ and C++11 code
+#CXXFLAGS=            	-g -O3 -Wall -pipe -Wno-unused $(PEDANTIC) -DRCPP_NEW_DATE_DATETIME_VECTORS
+#CXX1XFLAGS=		-g -O3 -Wall -pipe -Wno-unused $(PEDANTIC) -DRCPP_NEW_DATE_DATETIME_VECTORS
+CXXFLAGS=            	-g -O3 -Wall -pipe -Wno-unused $(PEDANTIC) -march=native
+CXX1XFLAGS=		-g -O3 -Wall -pipe -Wno-unused $(PEDANTIC) -march=native
+CXX11FLAGS=		-g -O3 -Wall -pipe -Wno-unused $(PEDANTIC) -march=native
+CXX14FLAGS=		-g -O3 -Wall -pipe -Wno-unused $(PEDANTIC) -march=native
+***** Still fails 
+with htis: 
+ /home/pi/R/arm-unknown-linux-gnueabihf-library/3.3/later/libs/later.so: undefined symbol: _ZN5boost7atomics6detail8lockpool11scoped_lockD1Ev
+
+See https://github.com/r-lib/later/issues/73#issuecomment-433583112
+Needs sudo apt-get install libboost-atomic-dev
+git clone https://github.com/r-lib/later.git
+emacs later/src/Makevars
+
+-PKG_LIBS = -pthread
++## PKG_LIBS = -pthread ## See  https://github.com/r-lib/later/issues/73#issuecomment-433583112
++PKG_LIBS = -pthread -lboost_atomic
+
+R CMD INSTALL later
+
+Now try shinydashboard again
+
+**** install.packages("glue")
 *** On PC R-3.5.0 from source
    RPostgreSQL, DBI, futile.logger, lubridate, magrittr, plyr
    libpq-dev need i installing RPostgreSQL from source
@@ -279,7 +318,7 @@ tp@ace:~/2018/Slyngel/KamstupReader/Dashboard/Dash2$ /opt/R/R-3.5.0/bin/Rscript 
 **** compile shiny
      package "later" fails with loads to errors
      warning: ‘template<class> class std::auto_ptr’ is deprecated 
-     This comment arning: ‘template<class> class std::auto_ptr’ is deprecated 
+     This comment https://github.com/eddelbuettel/bh/issues/57
      advices setting compilerflag -DBOOST_NO_AUTO_PTR
      export CFLAGS='-DBOOST_NO_AUTO_PTR' does not work
      
@@ -306,3 +345,46 @@ shiny::runApp(".", host = "0.0.0.0", launch.browser=FALSE)
   bash ./probe.sh 10.0.0.234
 - System/simulate.R: add data to database
   Rscript Rscript simulate.R -i 10.0.0.234
+* Install the Dashboard using docker
+** Install docker
+https://medium.freecodecamp.org/the-easy-way-to-set-up-docker-on-a-raspberry-pi-7d24ced073ef
+curl -fsSL get.docker.com -o get-docker.sh 
+bash get-docker.sh
+## add to group
+sudo gpasswd -a $USER docker
+newgrp docker 
+newgrp pi
+## Test:
+docker run hello-world
+
+** Build docker image with R
+https://raspberrypi.stackexchange.com/questions/81923/r-with-docker-in-a-raspberry-pi
+cd ~/KamstupReader/Docker
+pi@pi3:~/KamstupReader/Docker $ docker build dashboard/
+
+docker build -t "slyngel:dash" dashboard/
+
+Then we can possibly deply using shinyproxy
+
+*** Docker help
+http://odewahn.github.io/docker-jumpstart/building-images-with-dockerfiles.html
+https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#run
+
+Installing stuff in a running docker: https://ropenscilabs.github.io/r-docker-tutorial/03-install-packages.html
+
+* deb package
+** Backport r-cran-later from deb 10 (buster)
+See https://wiki.debian.org/SimpleBackportCreation
+ sudo apt-get install packaging-dev debian-keyring devscripts equivs
+
+## Get source package
+pi@pi3:~/deb_backports/r-cran-later $ dget -x http://deb.debian.org/debian/pool/main/r/r-cran-later/r-cran-later_0.7.5+dfsg-2.dsc
+## Get build deps
+pi@pi3:~/deb_backports/r-cran-later/r-cran-later-0.7.5+dfsg $ sudo mk-build-deps --install --remove
+## update changelog
+dch --local ~tp1+ --distribution stretch-backports "Rebuild for stretch"
+## build
+fakeroot debian/rules binary
+## This fails!
+## Newer version of some deps are needed.
+Go for the docker in stead
