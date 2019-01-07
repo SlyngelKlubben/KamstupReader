@@ -362,13 +362,20 @@ https://raspberrypi.stackexchange.com/questions/81923/r-with-docker-in-a-raspber
 cd ~/KamstupReader/Docker
 pi@pi3:~/KamstupReader/Docker $ docker build dashboard/
 
-docker build -t "slyngel:dash" dashboard/
+cd dashboard
+pi@pi3:~/KamstupReader/Docker/dashboard $ docker build -t "slyngel" .
 
 Then we can possibly deply using shinyproxy
 
+** testing docker
 docker run slyngel:latest /bin/bash
 docker ps
 docker exec -it <container name> /bin/bash
+
+** Running dashboard
+sudo docker run -it -p 3838:3838 slyngel:latest
+
+** Startin after boot
 
 *** Docker help
 http://odewahn.github.io/docker-jumpstart/building-images-with-dockerfiles.html
