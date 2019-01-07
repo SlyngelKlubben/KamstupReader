@@ -38,11 +38,13 @@ RUN apt-get install -y \
 ## Patch later
 RUN mkdir /root/Later ; \
   curl -L https://github.com/r-lib/later/archive/master.zip --output /root/Later/master.zip ; \
+  unzip master.zip ; \
   sed /root/Later/later-master/src/Makevars -e 's/PKG_LIBS = -pthread/PKG_LIBS = -pthread -lboost_atomic/' -i ; \
   cd /root/Later ; \
   ln -s later-master later
 
-RUN R CMD INSTALL later
+RUN cd /root/Later ; \
+    R CMD INSTALL later
 
 ## Add the app
 RUN mkdir /root/Dash2
