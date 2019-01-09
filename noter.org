@@ -375,7 +375,12 @@ docker exec -it <container name> /bin/bash
 ** Running dashboard
 sudo docker run -it -p 3838:3838 slyngel:latest
 
-** Startin after boot
+** Starting after boot
+
+** TODO Try basing n openanalytic simage
+See https://github.com/openanalytics/shinyproxy-template/blob/master/Dockerfile
+FROM openanalytics/r-base
+
 
 *** Docker help
 http://odewahn.github.io/docker-jumpstart/building-images-with-dockerfiles.html
@@ -399,3 +404,47 @@ fakeroot debian/rules binary
 ## This fails!
 ## Newer version of some deps are needed.
 Go for the docker in stead
+* Arduino
+** Rumføler
+Get SHT3x library
+https://github.com/wemos/WEMOS_SHT3x_Arduino_Library
+Installation
+    Clone this repository or download&unzip zip file into Arduino/libraries
+
+
+const char* ssid = "UniFiHome";             //!!!!!!!!!!!!!!!!!!!!! modify this
+const char* password = "thorhauge";                //!!!!!!!!!!!!!!!!!!!!!modify 
+
+//const char* ssid = "Viggo";             //!!!!!!!!!!!!!!!!!!!!! modify this
+//const char* password = "Mallebr0k";                //!!!!!!!!!!!!!!!!!!!!!modify 
+const char* ssid = "UniFiHome";             //!!!!!!!!!!!!!!!!!!!!! modify this
+const char* password = "thorhauge";                //!!!!!!!!!!!!!!!!!!!!!modify 
+const char* dbString = "http://192.168.0.47:3000/hus/public/tyv" ; // Change this
+
+// local variables
+float deltaTempTrigger = 0.1; // delta C for triggering send
+float deltaHumTrigger = 1.0 ; // delta C for triggering send
+int delayTrigger = 5*60*100 ;// loops for triggering send. 10 ms per loop. 5 min
+// initalization
+float lastTempSent = 0.0;
+float lastHumSent = 0.0 ;
+int lastLoopSent = 0    ;
+int CycleCount = 0 ;
+// Local vars
+String currentTemp = "";
+String currentHum = "";
+
+MAC:84:F3:EB:73:CF:A0
+ Serial.print("MAC:");
+  Serial.println(WiFi.macAddress());
+  Serial.println("//");
+  
+
+{"content":"SSHT3_TempC_celler: 32.14"}
+
+
+** sprintf
+  https://gist.github.com/philippbosch/5395696:
+char buffer[50];
+sprintf(buffer, "the current value is %d", i++);
+Serial.println(buffer);
