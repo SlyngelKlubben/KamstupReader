@@ -164,6 +164,7 @@ See System/probe.sh
 ** Postgres server
    sudo apt install postgresql-9.6  
 ** Postgres client
+   https://opensource.com/article/17/10/set-postgres-database-your-raspberry-pi
    sudo apt install postgresql-client-9.6
    ## Was already installed. Probably taken in by server
 ** pREST
