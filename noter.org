@@ -170,7 +170,7 @@ See System/probe.sh
 ** pREST
    wget https://github.com/prest/prest/releases/download/v0.3.0/prest-linux-arm-7
 *** TODO Move to app-folder
-    This executable should to into the app folder
+    This executable should to into the app folder - JAJA, men hvor er APP-folderen?
 ** git
 
 ** R, shiny and packages
