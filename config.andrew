@@ -17,7 +17,7 @@ prest:
   host: 127.0.0.1 ## in prest.toml
   port: 3000 ## listen on
 raspberry:
-  ip: 192.168.0.85 ## in  /etc/dhcpcd.conf see https://www.modmypi.com/blog/how-to-give-your-raspberry-pi-a-static-ip-address-update
+  ip: 192.168.0.200 ## in  /etc/dhcpcd.conf see https://www.modmypi.com/blog/how-to-give-your-raspberry-pi-a-static-ip-address-update
   user: iot
   pw: iot
   tz: UTC
@@ -29,4 +29,4 @@ db: ## postgres and prest.toml
   pw: iot
   schema: public
   table: vand
-  host: 192.168.0.85
+  host: 192.168.0.200
