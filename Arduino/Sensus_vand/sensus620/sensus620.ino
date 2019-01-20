@@ -12,6 +12,9 @@
 
 #include <ESP8266HTTPClient.h>
 
+// Get ssid, password, dbstring
+#include "parameters.h"
+
 #define USE_SERIAL Serial
 
 ESP8266WiFiMulti WiFiMulti;
@@ -41,9 +44,7 @@ void setup() {
         delay(1000);
     }
 
-//    WiFiMulti.addAP("Viggo", "Mallebr0k");
-    WiFiMulti.addAP("UniFiHome", "thorhauge");
-
+    WiFiMulti.addAP(ssid, password);
 
 
 }
@@ -77,7 +78,8 @@ if (LoopCountInState >= 60000 ) { // 1 loop = 10 ms, 1 hour = 100*60*60 loops , 
             HTTPClient http;
             USE_SERIAL.print("[HTTP] begin...\n");
             // configure traged server and url
-            http.begin("http://192.168.0.47:3000/hus/public/tyv"); //HTTP
+//            http.begin("http://192.168.0.47:3000/hus/public/tyv"); //HTTP
+            http.begin(dbstring); //HTTP
 
             USE_SERIAL.print("[HTTP] GET...\n");
            // start connection and send HTTP header
@@ -121,7 +123,8 @@ if (LoopCountInState >= 60000 ) { // 1 loop = 10 ms, 1 hour = 100*60*60 loops , 
             HTTPClient http;
             USE_SERIAL.print("[HTTP] begin...\n");
             // configure traged server and url
-            http.begin("http://192.168.0.47:3000/hus/public/tyv"); //HTTP
+//            http.begin("http://192.168.0.47:3000/hus/public/tyv"); //HTTP
+            http.begin(dbstring); //HTTP
 
             USE_SERIAL.print("[HTTP] GET...\n");
            // start connection and send HTTP header
