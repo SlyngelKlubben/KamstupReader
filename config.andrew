@@ -1,0 +1,32 @@
+slyngel:
+  name: Andrew
+  tz: CEST ## todo: get from browser
+wifi:
+  ssid: Viggo
+  pw: Mallebr0k
+sensors:
+  kamstrup:
+    key: Kamstrup
+    type: power
+    color: orange
+  sensus:
+    key: Sensus
+    type: water
+    color: blue
+prest:
+  host: 127.0.0.1 ## in prest.toml
+  port: 3000 ## listen on
+raspberry:
+  ip: 192.168.0.200 ## in  /etc/dhcpcd.conf see https://www.modmypi.com/blog/how-to-give-your-raspberry-pi-a-static-ip-address-update
+  user: iot
+  pw: iot
+  tz: UTC
+db: ## postgres and prest.toml
+  rdms: postgres
+  port: 5432 
+  db: hus 
+  user: iot
+  pw: iot
+  schema: public
+  table: vand
+  host: 192.168.0.200

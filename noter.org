@@ -171,12 +171,13 @@ eg sudo nmap -n -sP 10.42.0.0/24
 ** Postgres server
    sudo apt install postgresql-9.6  
 ** Postgres client
+   https://opensource.com/article/17/10/set-postgres-database-your-raspberry-pi
    sudo apt install postgresql-client-9.6
    ## Was already installed. Probably taken in by server
 ** pREST
    wget https://github.com/prest/prest/releases/download/v0.3.0/prest-linux-arm-7
 *** TODO Move to app-folder
-    This executable should to into the app folder
+    This executable should to into the app folder - JAJA, men hvor er APP-folderen?
 ** git
 
 ** R, shiny and packages
