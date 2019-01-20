@@ -160,6 +160,13 @@ See System/probe.sh
    - other config
      pi@pi3:~ $ sudo raspi-config 
      Set hostmane: pi3
+** Connectin ethernet directly to raspberry
+start nm-connection-editor
+Choose IPv4 Settings
+Method: "Shared to other computers"
+find it with nmap
+eg sudo nmap -n -sP 10.42.0.0/24
+(10.42.0.1 is ip of laptop ethernet)
 * Package installation
 ** Postgres server
    sudo apt install postgresql-9.6  
