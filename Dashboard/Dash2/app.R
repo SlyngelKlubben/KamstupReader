@@ -12,6 +12,10 @@
 library(yaml)
 C1 <- list(slyngel="jacob",sensors=list(kamstrup=list(key="Kamstrup",type="El"), Sensus=list(key="Sensus620", type="Vand")))
 Conf <- yaml.load_file("config.local") ## add symlink locally
+if(is.null(Conf$db$timezone))
+    Conf$db$timezone <- "UTC"
+myTimezone <- Conf$db$timezone
+cat("Timezone: ", myTimezone,"\n")
 source("lib.R")
 pg.new(Conf)
 
@@ -73,7 +77,7 @@ server <- function(input, output,session) {
 
     output$WaterCummHour <- renderValueBox({
         invalidateLater(10L, session)
-        dat1 <- dev.last.hour(device="Sensus620", hour=1)
+        dat1 <- dev.last.hour(device="Sensus620", hour=1, tz=myTimezone)
         HourLiter <- 0.1*nrow(dat1)
         flog.trace("Sensus620: Total L last hour %s",HourLiter)
         valueBox(sprintf("%.2f L",HourLiter), sprintf("Total L last hour"), color="blue")})    

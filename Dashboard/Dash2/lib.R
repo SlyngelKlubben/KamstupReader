@@ -65,8 +65,8 @@ sensus620.sec.last.L <- function(con=.pg, liter=1) {
     as.numeric(Sys.time()) - as.numeric(d1$Time)
 }
 
-dev.last.hour <- function(con=.pg, hour=1, table="tyv", device="Sensus620") {
-    Now.utc <- lubridate::with_tz(Sys.time(), "UTC")
+dev.last.hour <- function(con=.pg, hour=1, table="tyv", device="Sensus620", tz="UTC") {
+    Now.utc <- lubridate::with_tz(Sys.time(), tz)
     Res <- pg.get(q=sprintf("SELECT * FROM %s where timestamp >= (NOW() - INTERVAL '%s hours') AND  content LIKE '%s%%'", table, hour, device))
     if(nrow(Res) > 0)
         return(dev.trans(Res))
