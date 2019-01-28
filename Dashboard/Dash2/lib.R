@@ -37,7 +37,7 @@ dev.trans <- function(dat, tz.in="UTC", tz.out="CEST") {
     ## todo: get tz from conf
     library(lubridate)
     ## use in dev.last to 
-    Pat <- '^(\\S+):\\s+(\\d+)$'
+    Pat <- '^(\\S+):.*\\s+(\\d+)$'
     res <- transform(dat,
                      Source=sub(Pat,'\\1',as.character(content)),
                      Value=as.numeric(sub(Pat,'\\2',as.character(content))),
@@ -49,12 +49,12 @@ kamstrup.power <- function(dat) {
     ## input from dev.last
     ## Kamstrup sends 1 per Wh
     if(is.null(dat) || nrow(dat)==0) return(NULL)
-    transform(dat, PowerW = 60*60/TimeDiff)
+    transform(dat, PowerW = 60*60/TimeDiff, Power2W=60*60/TimeDiffSec)
 }
 sensus620.flow <- function(dat) {
     ## Sensus620 reader configured to 1 per dL
     if(is.null(dat) || nrow(dat)==0) return(NULL)
-    transform(dat, Water_L_per_Min = 6/TimeDiff)
+    transform(dat, Water_L_per_Min = 6/TimeDiff, Water_L_per_Min2 = 6/TimeDiffSec, L_per_Min = Value/90/TimeDiffSec*60)
 }
 
 sensus620.sec.last.L <- function(con=.pg, liter=1) {
