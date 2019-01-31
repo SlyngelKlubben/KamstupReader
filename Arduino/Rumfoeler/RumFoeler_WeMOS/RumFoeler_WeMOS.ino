@@ -14,16 +14,16 @@ ESP8266WiFiMulti WiFiMulti;
 #include <WEMOS_SHT3X.h>
 SHT3X sht30(0x45);
  
-//const char* ssid = "Viggo";             //!!!!!!!!!!!!!!!!!!!!! modify this
-//const char* password = "Mallebr0k";                //!!!!!!!!!!!!!!!!!!!!!modify 
-const char* ssid = "UniFiHome";             //!!!!!!!!!!!!!!!!!!!!! modify this
-const char* password = "thorhauge";                //!!!!!!!!!!!!!!!!!!!!!modify 
-const char* dbString = "http://192.168.0.47:3000/hus/public/tyv" ; // Change this
+const char* ssid = "Viggo";             //!!!!!!!!!!!!!!!!!!!!! modify this
+const char* password = "Mallebr0k";                //!!!!!!!!!!!!!!!!!!!!!modify 
+//const char* ssid = "UniFiHome";             //!!!!!!!!!!!!!!!!!!!!! modify this
+//const char* password = "thorhauge";                //!!!!!!!!!!!!!!!!!!!!!modify 
+const char* dbString = "http://192.168.0.200:3000/hus/public/envi" ; // Change this
 
 // local variables
 float deltaTempTrigger = 0.1; // delta C for triggering send
 float deltaHumTrigger = 1.0 ; // delta C for triggering send
-int delayTrigger = 5*60*100 ;// loops for triggering send. 10 ms per loop. 5 min
+int delayTrigger = 2*5*60*100 ;// loops for triggering send. 10 ms per loop. 5 min
 // initalization
 float lastTempSent = 0.0;
 float lastHumSent = 0.0 ;
@@ -33,20 +33,25 @@ int CycleCount = 0 ;
 String currentTemp = "";
 String currentHum = "";
 String MAC = "";
- 
-#define sigPin D3 
-int ledPin = D4;          //connect led pin to d4 and ground
+
 WiFiServer server(80);
 
+int inputPin = D5;
 int counter = 0;
+int pir_val = 0;
+int pir_State = LOW;
+bool pir_pg_state = false;
 
 void setup() {
   Serial.begin(115200);
   delay(10);
- 
- 
-  pinMode(ledPin, OUTPUT);
-  digitalWrite(ledPin, LOW);
+
+  // Diode setup
+  pinMode(BUILTIN_LED, OUTPUT);
+  digitalWrite(BUILTIN_LED, HIGH);
+
+  // PIR setup
+  pinMode(inputPin, INPUT);
  
   // Connect to WiFi network
   Serial.println();
@@ -84,16 +89,41 @@ void setup() {
 }
  
 void loop() {
- delay(1);
-CycleCount = CycleCount + 1;
+  delay(1);
 
-// /* Comments
-if (CycleCount >= delayTrigger) {                    
+  // PIR read
+  pir_val = digitalRead(inputPin);  // read input value
+  if (pir_val == HIGH) {            // check if the input is HIGH
+    digitalWrite(BUILTIN_LED, LOW);  // turn LED ON
+    if (pir_State == LOW) {
+      // we have just turned on
+      Serial.println("Motion detected!");
+      // We only want to print on the output change, not state
+      pir_State = HIGH;
+      pir_pg_state = true;
+      CycleCount = delayTrigger+100;
+    }
+  } else {
+    digitalWrite(BUILTIN_LED, HIGH); // turn LED OFF
+    if (pir_State == HIGH){
+      // we have just turned of
+      Serial.println("Motion ended!");
+      // We only want to print on the output change, not state
+      pir_State = LOW;
+      pir_pg_state = false;
+    }
+  }
 
-   Serial.println(formatTemp()); 
+
+  
+  CycleCount = CycleCount + 1;
+
+  // /* Comments
+  if (CycleCount >= delayTrigger) {                    
+    Serial.println(formatTemp()); 
 
           // wait for WiFi connection
-          digitalWrite(LED_BUILTIN, LOW);   // turn the LED on (LOW is the voltage level)
+          // digitalWrite(LED_BUILTIN, LOW);   // turn the LED on (LOW is the voltage level)
           if((WiFiMulti.run() == WL_CONNECTED)) {
             HTTPClient http;
             Serial.print("[HTTP] begin...\n");
@@ -107,11 +137,22 @@ if (CycleCount >= delayTrigger) {
             currentTemp = getTemp() ; //String(sht30.cTemp);
             currentHum =  String(sht30.humidity) ;
             CycleCount = 0;
-            String myIdent = "\"SSHT3_TempC_celler: "  ; // + currentTemp ;
-            String myPre = "{\"content\":" ;
+            //String myIdent = "\"SSHT3_TempC_celler: "  ; // + currentTemp ;
+            //String myPre = "{\"content\":" ;
+            //String myPost = "\"}" ;
+            //String myJson = myPre + myIdent + currentTemp + myPost ;
+            //Serial.println(myJson);
+
+            String myPreTemp = "{\"temp\":\"" ;
+            String myPreHumi = "\",\"humi\":\"";
+            String myPrePir = "\",\"pir\":\"";
+            String myPreSId = "\",\"senid\":\"";
             String myPost = "\"}" ;
-            String myJson = myPre + myIdent + currentTemp + myPost ;
+            String myJson = myPreTemp + currentTemp + myPreHumi + currentHum + myPrePir + pir_pg_state + myPreSId + WiFi.macAddress() + myPost ;
             Serial.println(myJson);
+
+
+            
             int httpCode = http.POST(myJson);
             // httpCode will be negative on error
             if(httpCode > 0) {
@@ -137,7 +178,7 @@ if (CycleCount >= delayTrigger) {
 
             http.end();
             }
-          digitalWrite(LED_BUILTIN, HIGH);   // turn the LED off (HIGH is the voltage level)
+          //digitalWrite(LED_BUILTIN, HIGH);   // turn the LED off (HIGH is the voltage level)
         }
 
 // Comments */ 
@@ -163,11 +204,11 @@ if (CycleCount >= delayTrigger) {
  
   int value = LOW;
   if (request.indexOf("/LED=ON") != -1){
-    digitalWrite(ledPin, HIGH);
+    digitalWrite(BUILTIN_LED, HIGH);
     value = HIGH;
   } 
   if (request.indexOf("/LED=OFF") != -1){
-    digitalWrite(ledPin, LOW);
+    digitalWrite(BUILTIN_LED, LOW);
     value = LOW;
   }
  
@@ -203,7 +244,7 @@ if (CycleCount >= delayTrigger) {
   }
 
   client.print("<br>Temp is: ");
-  client.print(sht30.cTemp-10);
+  client.print(sht30.cTemp);
   client.print("<br>Humidity is: ");
   client.print(sht30.humidity);
     
@@ -255,4 +296,3 @@ String formatTemp() {
   Serial.println(buffer);
   return buffer;
 }
-
