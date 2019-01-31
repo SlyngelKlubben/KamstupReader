@@ -14,13 +14,32 @@ library(dplyr)
 library(ggplot2)
 library(lattice)
 library(plotly)
+library(futile.logger)
 
 ## Local funcs
 source("../lib.R")
 
+DB <- TRUE
 
 ## Read data
-dat.in <- read.csv("../2019-01-28.dump", skip=1 ) ## Replace get from database
+if(DB) {
+    flog.info("Using database")
+    if(file.exists("../config.local")) {
+        library(yaml)
+        Conf <- yaml.load_file("../config.local") ## add symlink locally
+        flog.info("Read config. Using db on %s", Conf$db$host)
+    } else {
+        stop("Needs config file to find database")
+    }
+    pg.new(Conf)
+    dat.in <- dev.last(device="", limit=NA)
+    pg.close()
+    flog.info("Got %s rows of data", nrow(dat.in))
+} else {
+    flog.info("Using file")
+    dat.in <- read.csv("../data.dump", skip=1 ) ## Replace get from database
+    flog.info("Read %s rows of data", nrow(dat.in))
+}
 
 ## process
 dat <- dev.trans(dat.in)
@@ -53,7 +72,8 @@ ui <- fluidPage(
          dateInput("date",
                      "Select Day",
                      min = Day1,
-                     max = Day2,
+                   max = Day2,
+                   value = Day2,
                      weekstart=1)
       ),
       

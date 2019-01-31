@@ -31,4 +31,3 @@ db: ## postgres and prest.toml
   table: tyv
   host: 10.0.0.234
   timezone: Europe/Copenhagen
-  
