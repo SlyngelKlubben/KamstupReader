@@ -181,6 +181,7 @@ eg sudo nmap -n -sP 10.42.0.0/24
 ** git
 
 ** R, shiny and packages
+   https://steemit.com/tutorial/@m4rk.h4nn4/how-to-install-and-run-shiny-server-on-the-raspberry-pi-3-and-raspian-jassie-lite
    sudo apt install r-base
    sudo apt install r-cran-lattice ## already there
    sudo apt install r-cran-shiny r-cran-shinybs r-cran-shinydashboard
