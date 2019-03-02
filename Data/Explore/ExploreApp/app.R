@@ -24,9 +24,9 @@ DB <- TRUE
 ## Read data
 if(DB) {
     flog.info("Using database")
-    if(file.exists("../config.local")) {
+    if(file.exists("config.local")) {
         library(yaml)
-        Conf <- yaml.load_file("../config.local") ## add symlink locally
+        Conf <- yaml.load_file("config.local") ## add symlink locally
         flog.info("Read config. Using db on %s", Conf$db$host)
     } else {
         stop("Needs config file to find database")
@@ -91,13 +91,13 @@ server <- function(input, output) {
    
    output$water_rate <- renderPlotly({
       req(input$date) 
-      p1 <- ggplot(subset(vandRate, as.Date(Time)==input$date), aes(x=Time, y=L_per_min)) + geom_point()+ geom_step() + ggtitle("Water Flow")
+      p1 <- ggplot(subset(vandRate, as.Date(Time)==input$date), aes(x=Time, y=L_per_min)) + geom_point()+ geom_step() + ggtitle(sprintf("Water Flow %s", input$date))
       ggplotly(p1)
       })
    output$water_total <- renderPlotly({
      req(input$date) 
      p1 <- ggplot(transform(subset(vand, as.Date(Time)==input$date), Liter = Total_Liter - Total_Liter[1]), aes(x=Time, y=Liter)) + 
-        geom_step() + ggtitle("Water Consumed")
+        geom_step() + ggtitle(sprintf("Water Consumed %s", input$date))
      ggplotly(p1)
    })
    
