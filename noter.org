@@ -380,13 +380,23 @@ Then we can possibly deply using shinyproxy
 docker run slyngel:latest /bin/bash
 docker ps
 docker exec -it <container name> /bin/bash
-
+** This works [2019-03-02 lør]
+Base on balenalib/raspberrypi3-debian:buster-build
+Balenalib has a lot of images of this form:
+ balenalib/<hw>-<distro>-<lang_stack>:<lang_ver>-<distro_ver>-(build|run)-<yyyymmdd>
+See https://www.balena.io/docs/reference/base-images/base-images/
+*** Workflow
+    - docker build -t das2 .
+    - docker run -p 3838:3838 dash2:latest
+*** Notes
+Docker does not want symlinks outside of its context.
+We will likely only have one app, so I just need to consolidate lib and config there.
 ** Running dashboard
 sudo docker run -it -p 3838:3838 slyngel:latest
 
 ** Starting after boot
 
-** TODO Try basing n openanalytic simage
+** TODO Try basing on openanalytic simage
 See https://github.com/openanalytics/shinyproxy-template/blob/master/Dockerfile
 FROM openanalytics/r-base
 
