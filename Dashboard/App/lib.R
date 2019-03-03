@@ -12,7 +12,9 @@ pg.new <- function(Conf = list(db=list(host="192.168.0.47",port=5432, db="hus", 
     con
 }
 pg.close <- function(con=.pg) {
-    dbDisconnect(con)
+    ##  dbDisconnect(con)
+    ## https://stackoverflow.com/a/50795602
+    lapply(dbListConnections(drv = dbDriver("PostgreSQL")), function(x) {dbDisconnect(conn = x)})
 }
 pg.get <- function(q, con=.pg) {
     library(futile.logger)
@@ -20,6 +22,15 @@ pg.get <- function(q, con=.pg) {
     stmt <- paste(q, ";") %>% sub(';+$',';', .)
     flog.debug(stmt)
     dbGetQuery(conn=con, statement=stmt)  
+}
+
+dat.day <- function(date, table="tyv", con=.pg){
+    ## Get data from date
+    stmt <- sprintf("SELECT * FROM %s where timestamp >= '%s' AND timestamp < '%s' ORDER BY id DESC", table, as.Date(date), as.Date(date)+1)
+    res <- pg.get(q=stmt, con=con)
+    if(nrow(res) == 0)
+        return(NULL)
+    dev.trans(res)
 }
 
 dev.last <- function(device='Kamstrup', table="tyv",limit=10, con=.pg) {
@@ -49,8 +60,10 @@ kamstrup.power <- function(dat) {
     ## input from dev.last
     ## Kamstrup sends 1 per Wh
     if(is.null(dat) || nrow(dat)==0) return(NULL)
-    transform(dat, PowerW = 60*60/TimeDiff, Power2W=60*60/TimeDiffSec)
+    transform(subset(dat, Source=="Kamstrup" & Value > 1), PowerW=60*60/TimeDiffSec, kWh = cumsum(Value > 1)/1000)
 }
+
+
 sensus620.flow <- function(dat) {
     ## Sensus620 reader configured to 1 per dL
     if(is.null(dat) || nrow(dat)==0) return(NULL)
@@ -71,4 +84,19 @@ dev.last.hour <- function(con=.pg, hour=1, table="tyv", device="Sensus620", tz="
     if(nrow(Res) > 0)
         return(dev.trans(Res))
     NULL
+}
+
+dat.water <- function(dat) {
+    vand <- subset(dat, Source!="Kamstrup") %>% 
+        sensus620.flow() %>%
+        mutate(Total_Liter = cumsum(Value)/90, TimeSec = as.numeric(Time)) %>%
+        mutate(TimeMin = floor(TimeSec/60))
+    
+    vand
+}
+
+water.rate <- function(vand) {
+    ## Vand
+    vandRate <- vand %>% group_by(TimeMin) %>%  mutate( L_per_min = sum(Value)/90) %>% filter(row_number()==1)
+    vandRate
 }
