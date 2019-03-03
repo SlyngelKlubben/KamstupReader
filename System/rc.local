@@ -1,0 +1,9 @@
+## Run pRest server
+cd /opt/Prest/ && ./prest-linux-arm-7 > /opt/Prest/prest.log &
+
+## Run dashboard
+cd
+/bin/sleep 10
+/usr/bin/docker run --rm -d -p 80:3838 app:latest &
+
+exit 0
