@@ -1,0 +1,10 @@
+db: ## postgres and prest.toml
+  rdms: postgres
+  port: 5432 
+  db: hus 
+  user: XXX
+  pw: YYY
+  schema: public
+  table: tyv
+  host: 10.0.0.234
+  timezone: Europe/Copenhagen
