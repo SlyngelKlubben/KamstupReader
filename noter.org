@@ -345,6 +345,17 @@ shiny::runApp(".", host = "0.0.0.0", launch.browser=FALSE)
    docker build -t app .
 5. test: 
    docker run -it -p 80:3838 app:latest
+   Connct to your raspberry eg http://10.0.0.234/
+6. test detached
+   docker run --rm -d -p 80:3838 app:latest
+   to stop:
+   docker ps
+   docker kill <container id>
+7. add this to /etc/rc.local
+   ## Run dashboard
+   cd
+   /bin/sleep 10
+   /usr/bin/docker run --rm -d -p 80:3838 app:latest &
 * Installation on raspberry-pi
 - clone repo:
   git clone https://github.com/SlyngelKlubben/KamstupReader.git
