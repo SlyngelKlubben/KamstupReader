@@ -340,7 +340,7 @@ shiny::runApp(".", host = "0.0.0.0", launch.browser=FALSE)
 ** Running the dashboard from docker
 1. cd Dashboard/App
 2. cp config_example.yml config.yml
-3. emacs config.yml
+3. emacs config.yml ## set db user and password
 4. Build docker image: 
    docker build -t app .
 5. test: 
@@ -356,6 +356,7 @@ shiny::runApp(".", host = "0.0.0.0", launch.browser=FALSE)
    cd
    /bin/sleep 10
    /usr/bin/docker run --rm -d -p 80:3838 app:latest &
+8. reboot 
 * Installation on raspberry-pi
 - clone repo:
   git clone https://github.com/SlyngelKlubben/KamstupReader.git
