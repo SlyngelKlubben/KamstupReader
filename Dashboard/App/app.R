@@ -16,6 +16,7 @@ library(lattice)
 library(plotly)
 library(futile.logger)
 library(yaml)
+library(openxlsx)
 
 ## Local funcs
 source("lib.R")
@@ -55,18 +56,30 @@ ui <- fluidPage(
    sidebarLayout(
       sidebarPanel(width = 2,
          dateInput("date",
-                     "Select Day",
-                     min = Day1,
+                   "Select Day",
+                   min = Day1,
                    max = Day2,
                    value = Day2,
-                     weekstart=1)
+                   weekstart=1)
+       , hr()
+       , downloadButton("downloadWater", "Water Data")
+       , downloadButton("downloadPower", "Power Data")
       ),
       
       # Show a plot of the generated distribution
       mainPanel(
-        plotlyOutput("water_rate"),
-        plotlyOutput("water_total")
-        
+          tabsetPanel(
+              tabPanel("Water",
+                       plotlyOutput("water_rate")
+                     , plotlyOutput("water_total")
+                     , dataTableOutput("water_table")  
+                       )
+             ,tabPanel("Power",
+                       plotlyOutput("power")
+                     , plotlyOutput("kWh")
+                     , dataTableOutput("power_table")  
+                       )
+              )
       )
    )
 )
@@ -88,22 +101,54 @@ server <- function(input, output) {
         req(Water())
         water.rate(Water())
     })
+
+    Power <- reactive({
+        kamstrup.power(subset(Dat(), Source=="Kamstrup" & Value > 1))
+    })
     
    output$water_rate <- renderPlotly({
       req(input$date) 
       p1 <- ggplot(data=WaterRate(), aes(x=Time, y=L_per_min)) + geom_point()+ geom_step() + ggtitle(sprintf("Water Flow %s", input$date))
       ggplotly(p1)
       })
-   output$water_total <- renderPlotly({
+    output$water_total <- renderPlotly({
      req(input$date) 
      p1 <- ggplot(transform(Water(), Liter = Total_Liter - Total_Liter[1]), aes(x=Time, y=Liter)) + 
         geom_step() + ggtitle(sprintf("Water Consumed %s", input$date))
      ggplotly(p1)
-   })
-   
-   
-   }
+    })
+    output$water_table <- renderDataTable({
+        req(input$date)
+        Water()
+    }, options = list(pageLength = 10)
+    )
+    output$downloadWater <- downloadHandler(
+        filename = function() sprintf("water_%s.xlsx",input$date)
+      , content = function(file) write.xlsx(x=Water(), file)
+    )
+    
+    output$power <- renderPlotly({
+        req(input$date)
+        p1 <- ggplot(dat=Power(), aes(x = Time, y=PowerW)) +  geom_step() + ggtitle(sprintf("Power consumption %s", input$date))
+      ggplotly(p1)
+    })
+    output$kWh <- renderPlotly({
+        req(input$date)
+        p1 <- ggplot(dat=Power(), aes(x = Time, y=kWh)) +  geom_line() + ggtitle(sprintf("Energy consumption %s", input$date))
+      ggplotly(p1)
+    })
+    output$power_table <- renderDataTable({
+        req(input$date)
+        Power()
+    }, options = list(pageLength=10)
+    )   
+    output$downloadPower <- downloadHandler(
+        filename = function() sprintf("power_%s.xlsx",input$date)
+      , content = function(file) write.xlsx(x=Power(), file)
+    )
+}
 
 # Run the application 
 app <- shinyApp(ui = ui, server = server)
 runApp(app)
+
