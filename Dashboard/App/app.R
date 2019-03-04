@@ -31,7 +31,7 @@ if(file.exists("config.yml")) {
 pg.new(Conf)
 
 ## get Date Range
-DateRange <-  pg.get(q="select min(timestamp), max(timestamp) from tyv")
+DateRange <-  pg.get(q=sprintf("select min(timestamp), max(timestamp) from tyv", Conf$db$table))
 
 Day1 <- as.Date(DateRange$min)
 Day2 <- as.Date(DateRange$max)
@@ -58,8 +58,8 @@ ui <- fluidPage(
          dateInput("date",
                    "Select Day",
                    min = Day1,
-                   max = Day2,
-                   value = Day2,
+                   max = Sys.Date(),
+                   value = Sys.Date(),
                    weekstart=1)
        , hr()
        , downloadButton("downloadWater", "Water Data")
