@@ -55,12 +55,13 @@ ui <- fluidPage(
    # Sidebar with a slider input for number of bins 
    sidebarLayout(
       sidebarPanel(width = 2,
-         dateInput("date",
-                   "Select Day",
-                   min = Day1,
-                   max = Sys.Date(),
-                   value = Sys.Date(),
-                   weekstart=1)
+                   uiOutput("datepicker")
+         # dateInput("date",
+         #           "Select Day",
+         #           min = Day1,
+         #           max = textOutput("today"),
+         #           value = textOutput("today"),
+         #           weekstart=1)
        , hr()
        , downloadButton("downloadWater", "Water Data")
        , downloadButton("downloadPower", "Power Data")
@@ -87,6 +88,15 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
 
+    output$datepicker <- renderUI({
+      dateInput("date",
+                "Select Day",
+                min = Day1,
+                max = Sys.Date(),
+                value = Sys.Date(),
+                weekstart=1)
+    })
+  
     Dat <- reactive({
         req(input$date)
         dat.day(date=input$date, table=Conf$db$table) 
