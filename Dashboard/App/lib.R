@@ -24,7 +24,7 @@ pg.get <- function(q, con=.pg) {
     dbGetQuery(conn=con, statement=stmt)  
 }
 
-dat.day <- function(date, table="tyv", con=.pg){
+dat.day <- function(date, table=Conf$db$table, con=.pg){
     ## Get data from date
     stmt <- sprintf("SELECT * FROM %s where timestamp >= '%s' AND timestamp < '%s' ORDER BY id DESC", table, as.Date(date), as.Date(date)+1)
     res <- pg.get(q=stmt, con=con)
@@ -33,7 +33,7 @@ dat.day <- function(date, table="tyv", con=.pg){
     dev.trans(res)
 }
 
-dev.last <- function(device='Kamstrup', table="tyv",limit=10, con=.pg) {
+dev.last <- function(device='Kamstrup', table=Conf$db$table,limit=10, con=.pg) {
     ## Get latest data on device
     stmt <- sprintf("SELECT * FROM %s where content LIKE '%s%%' ORDER BY id DESC", table, device)
     if(!is.na(limit))
@@ -92,7 +92,7 @@ sensus620.sec.last.L <- function(con=.pg, liter=1) {
     as.numeric(Sys.time()) - as.numeric(d1$Time)
 }
 
-dev.last.hour <- function(con=.pg, hour=1, table="tyv", device="Sensus620", tz="UTC") {
+dev.last.hour <- function(con=.pg, hour=1, table=Conf$db$table, device="Sensus620", tz="UTC") {
     Now.utc <- lubridate::with_tz(Sys.time(), tz)
     Res <- pg.get(q=sprintf("SELECT * FROM %s where timestamp >= (NOW() - INTERVAL '%s hours') AND  content LIKE '%s%%'", table, hour, device))
     if(nrow(Res) > 0)
