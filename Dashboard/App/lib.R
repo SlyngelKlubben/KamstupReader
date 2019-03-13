@@ -53,20 +53,34 @@ dev.trans <- function(dat, tz.in="UTC", tz.out="CEST") {
                      Source=sub(Pat,'\\1',as.character(content)),
                      Value=as.numeric(sub(Pat,'\\2',as.character(content))),
                      Time=with_tz(ymd_hms(timestamp), tzone="Europe/Copenhagen"))
-    transform(plyr::arrange(res, id), TimeDiffSec=c(NA, diff(Time)), TimeDiff=c(NA,diff(timestamp)))
+    ## transform(plyr::arrange(res, id), TimeDiffSec=c(NA, diff(Time)), TimeDiff=c(NA,diff(timestamp)))
+    res <- transform(res, TimeSec = as.numeric(Time))
+    res <- transform(res, TimeMin = floor(TimeSec/60))
+    plyr::arrange(res, id)
 }
 
 kamstrup.power <- function(dat) {
     ## input from dev.last
     ## Kamstrup sends 1 per Wh
     if(is.null(dat) || nrow(dat)==0) return(NULL)
-    transform(subset(dat, Source=="Kamstrup" & Value > 1), PowerW=60*60/TimeDiffSec, kWh = cumsum(Value > 1)/1000)
+    dat <- transform(subset(dat, Source=="Kamstrup" & Value > 1), TimeDiffSec=c(NA, diff(Time)), TimeDiff=c(NA,diff(timestamp)))
+    transform(dat, PowerW=60*60/TimeDiff, kWh = cumsum(Value > 1)/1000)
 }
+
+kamstrup.power.rate <- function(dat) {
+  ## input from dev.last
+  ## Kamstrup sends 1 per Wh
+  library(dplyr)
+  if(is.null(dat) || nrow(dat)==0) return(NULL)
+  dat %>% group_by(TimeMin) %>% mutate(Wh_per_min = n()) %>% filter(row_number()==1) %>% mutate(W = Wh_per_min*60)
+}
+
 
 
 sensus620.flow <- function(dat) {
     ## Sensus620 reader configured to 1 per dL
     if(is.null(dat) || nrow(dat)==0) return(NULL)
+    dat <- transform(subset(dat, Source=="Sensus620" ), TimeDiffSec=c(NA, diff(Time)), TimeDiff=c(NA,diff(timestamp)))
     transform(dat, Water_L_per_Min = 6/TimeDiff, Water_L_per_Min2 = 6/TimeDiffSec, L_per_Min = Value/90/TimeDiffSec*60)
 }
 
@@ -87,7 +101,7 @@ dev.last.hour <- function(con=.pg, hour=1, table="tyv", device="Sensus620", tz="
 }
 
 dat.water <- function(dat) {
-    vand <- subset(dat, Source!="Kamstrup") %>% 
+    vand <- subset(dat, Source =="Sensus620") %>% 
         sensus620.flow() %>%
         mutate(Total_Liter = cumsum(Value)/90, TimeSec = as.numeric(Time)) %>%
         mutate(TimeMin = floor(TimeSec/60))
