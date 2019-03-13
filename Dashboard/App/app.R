@@ -17,6 +17,7 @@ library(plotly)
 library(futile.logger)
 library(yaml)
 library(openxlsx)
+library(shinydashboard)
 
 ## Local funcs
 source("lib.R")
@@ -65,6 +66,8 @@ ui <- fluidPage(
        , hr()
        , downloadButton("downloadWater", "Water Data")
        , downloadButton("downloadPower", "Power Data")
+       , hr()
+       , actionButton("update", "Update")
       ),
       
       # Show a plot of the generated distribution
@@ -80,6 +83,15 @@ ui <- fluidPage(
                      , plotlyOutput("kWh")
                      , dataTableOutput("power_table")  
                        )
+             , tabPanel("Current",
+                        dashboardBody (
+                        fluidRow(
+                          valueBoxOutput("PowerNow")
+                        )
+                        #, fluidRow(
+                        #  valueBoxOutput("Waterflux")
+                        #)
+                        ))
               )
       )
    )
@@ -115,7 +127,11 @@ server <- function(input, output) {
     Power <- reactive({
         kamstrup.power(subset(Dat(), Source=="Kamstrup" & Value > 1))
     })
-    
+
+    PowerNow <- eventReactive(input$update, {
+      dev.last(device="Kamstrup", limit=5) %>% kamstrup.power()
+    })
+        
    output$water_rate <- renderPlotly({
       req(input$date) 
       p1 <- ggplot(data=WaterRate(), aes(x=Time, y=L_per_min)) + geom_point()+ geom_step() + ggtitle(sprintf("Water Flow %s", input$date))
@@ -156,6 +172,12 @@ server <- function(input, output) {
         filename = function() sprintf("power_%s.xlsx",input$date)
       , content = function(file) write.xlsx(x=Power(), file)
     )
+
+      output$PowerNow <- renderValueBox({
+        req(input$update)
+      dat1 <- tail(PowerNow(),1)
+      with(dat1,flog.trace("Kamstrup: Used: %sW at %s",PowerW, Time))
+      valueBox(sprintf("%.0fW",dat1$PowerW), sprintf("Power. %s",dat1$Time), color="orange")})
 }
 
 # Run the application 
