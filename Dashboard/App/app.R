@@ -25,14 +25,14 @@ source("lib.R")
 
 if(file.exists("config.yml")) {
     Conf <- yaml.load_file("config.yml") ## add symlink locally
-    flog.info("Read config. Using db on %s", Conf$db$host)
+    flog.info("Read config. Using db on %s", Conf$db$profile)
 } else {
     stop("Needs config file to find database")
 }
 pg.new(Conf)
 
 ## get Date Range
-DateRange <-  pg.get(q=sprintf("select min(timestamp), max(timestamp) from tyv", Conf$db$table))
+DateRange <-  pg.get(q=sprintf("select min(timestamp), max(timestamp) from vand", Conf$db$vandtable))
 
 Day1 <- as.Date(DateRange$min)
 Day2 <- as.Date(DateRange$max)
@@ -84,14 +84,14 @@ ui <- fluidPage(
                      , dataTableOutput("power_table")  
                        )
              , tabPanel("Current",
-                        dashboardBody (
-                        fluidRow(
-                          valueBoxOutput("PowerNow")
-                        )
-                        #, fluidRow(
-                        #  valueBoxOutput("Waterflux")
-                        #)
-                        ))
+                       dashboardBody (
+                       fluidRow(
+                         valueBoxOutput("PowerNow")
+                       )
+                      #, fluidRow(
+                      #    valueBoxOutput("Waterflux")
+                      # )
+                       ))
               )
       )
    )
@@ -109,14 +109,19 @@ server <- function(input, output) {
                 weekstart=1)
     })
   
-    Dat <- reactive({
+    VandDat <- reactive({
         req(input$date)
-        dat.day(date=input$date, table=Conf$db$table) 
+        dat.day(date=input$date, table=Conf$db$vandtable) 
+    })
+    
+    ElDat <- reactive({
+      req(input$date)
+      dat.day(date=input$date, table=Conf$db$eltable) 
     })
 
     Water <- reactive({
-        req(Dat())
-        dat.water(Dat())
+        req(VandDat())
+        dat.water(VandDat())
     })
 
     WaterRate <- reactive({
@@ -125,7 +130,7 @@ server <- function(input, output) {
     })
 
     Power <- reactive({
-        kamstrup.power(subset(Dat(), Source=="Kamstrup" & Value > 1))
+        kamstrup.power(subset(ElDat(), Source=="Kamstrup" & Value > 1))
     })
 
     PowerNow <- eventReactive(input$update, {
@@ -173,11 +178,23 @@ server <- function(input, output) {
       , content = function(file) write.xlsx(x=Power(), file)
     )
 
-      output$PowerNow <- renderValueBox({
-        req(input$update)
+    output$PowerNow <- renderValueBox({
+      req(input$update)
       dat1 <- tail(PowerNow(),1)
       with(dat1,flog.trace("Kamstrup: Used: %sW at %s",PowerW, Time))
-      valueBox(sprintf("%.0fW",dat1$PowerW), sprintf("Power. %s",dat1$Time), color="orange")})
+      valueBox(
+        sprintf("%.0fW",dat1$PowerW), sprintf("Power. %s",dat1$Time), 
+        color="orange"
+      )
+    })
+    
+    output$approvalBox <- renderValueBox({
+      dat <- dev.last(device = "Sensus", limit=5) %>% sensus620.flow()
+      valueBox(
+        sprintf("%.2f%% L/min",dat$Water_L_per_min), "Approval", icon = icon("thumbs-up", lib = "glyphicon"),
+        color = "yellow"
+      )
+    })
 }
 
 # Run the application 
