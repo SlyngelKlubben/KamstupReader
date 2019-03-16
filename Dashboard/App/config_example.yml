@@ -1,10 +1,14 @@
 db: ## postgres and prest.toml
+  profile: Slyngel
   rdms: postgres
   port: 5432 
   db: hus 
-  user: XXX
-  pw: YYY
+  user: iot
+  pw: iot
   schema: public
   table: tyv
-  host: 10.0.0.234
+  eltable: el
+  vandtable: vand
+  envitable: envi
+  host: 192.168.0.200
   timezone: Europe/Copenhagen
