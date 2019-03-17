@@ -83,6 +83,9 @@ ui <- fluidPage(
                      , plotlyOutput("kWh")
                      , dataTableOutput("power_table")  
                        )
+             , tabPanel("Enviroment",
+                        plotlyOutput("envi")
+                      , dataTableOutput("envi_table"))
              , tabPanel("Current",
                        dashboardBody (
                        fluidRow(
@@ -118,6 +121,11 @@ server <- function(input, output) {
       req(input$date)
       dat.day(date=input$date, table=Conf$db$eltable) 
     })
+    
+    EnviDat <- reactive({
+      req(input$date)
+      dat.day(date=input$date, table=Conf$db$envitable) 
+    })
 
     Water <- reactive({
         req(VandDat())
@@ -128,6 +136,11 @@ server <- function(input, output) {
         req(Water())
         water.rate(Water())
     })
+    
+    EnviRate <- reactive({
+      req(EnviDat())
+      dat.envi(EnviDat())
+    })
 
     Power <- reactive({
         kamstrup.power(subset(ElDat(), Source=="Kamstrup" & Value > 1))
@@ -137,16 +150,30 @@ server <- function(input, output) {
       dev.last(device="Kamstrup", limit=5) %>% kamstrup.power()
     })
         
-   output$water_rate <- renderPlotly({
+    output$envi <- renderPlotly({
+      req(input$date)
+
+      p1 <- ggplot(EnviDat(), aes(x = timestamp))
+      p1 <- p1 + geom_line(aes(y = temp, colour = "Temperature"))
+      p1 <- p1 + geom_line(aes(y = humi/1.7, colour = "Humidity"))
+      p1 <- p1 + scale_y_continuous(sec.axis = sec_axis(~.*1.7, name = "Relative humidity [%]"))
+      p1 <- p1 + scale_colour_manual(values = c("blue", "red"))
+      p1 <- p1 + labs(y = "Air temperature [°C]",x = "Date and time",colour = "Parameter")
+      p1 <- p1 + theme(legend.position = c(0.8, 0.9))
+      
+      ggplotly(p1)
+    })
+    output$water_rate <- renderPlotly({
       req(input$date) 
       p1 <- ggplot(data=WaterRate(), aes(x=Time, y=L_per_min)) + geom_point()+ geom_step() + ggtitle(sprintf("Water Flow %s", input$date))
       ggplotly(p1)
       })
+    
     output$water_total <- renderPlotly({
-     req(input$date) 
-     p1 <- ggplot(transform(Water(), Liter = Total_Liter - Total_Liter[1]), aes(x=Time, y=Liter)) + 
+      req(input$date) 
+      p1 <- ggplot(transform(Water(), Liter = Total_Liter - Total_Liter[1]), aes(x=Time, y=Liter)) + 
         geom_step() + ggtitle(sprintf("Water Consumed %s", input$date))
-     ggplotly(p1)
+      ggplotly(p1)
     })
     output$water_table <- renderDataTable({
         req(input$date)
@@ -188,13 +215,6 @@ server <- function(input, output) {
       )
     })
     
-    output$approvalBox <- renderValueBox({
-      dat <- dev.last(device = "Sensus", limit=5) %>% sensus620.flow()
-      valueBox(
-        sprintf("%.2f%% L/min",dat$Water_L_per_min), "Approval", icon = icon("thumbs-up", lib = "glyphicon"),
-        color = "yellow"
-      )
-    })
 }
 
 # Run the application 
