@@ -90,6 +90,7 @@ ui <- fluidPage(
                        dashboardBody (
                        fluidRow(
                          valueBoxOutput("PowerNow")
+                        ,valueBoxOutput("TempNow")
                        )
                       #, fluidRow(
                       #    valueBoxOutput("Waterflux")
@@ -155,8 +156,8 @@ server <- function(input, output) {
 
       p1 <- ggplot(EnviDat(), aes(x = timestamp))
       p1 <- p1 + geom_line(aes(y = temp, colour = "Temperature"))
-      p1 <- p1 + geom_line(aes(y = humi/1.7, colour = "Humidity"))
-      p1 <- p1 + scale_y_continuous(sec.axis = sec_axis(~.*1.7, name = "Relative humidity [%]"))
+      p1 <- p1 + geom_line(aes(y = humi/1, colour = "Humidity"))
+      p1 <- p1 + scale_y_continuous(sec.axis = sec_axis(~.*1, name = "Relative humidity [%]"))
       p1 <- p1 + scale_colour_manual(values = c("blue", "red"))
       p1 <- p1 + labs(y = "Air temperature [°C]",x = "Date and time",colour = "Parameter")
       p1 <- p1 + theme(legend.position = c(0.8, 0.9))
@@ -210,7 +211,16 @@ server <- function(input, output) {
       dat1 <- tail(PowerNow(),1)
       with(dat1,flog.trace("Kamstrup: Used: %sW at %s",PowerW, Time))
       valueBox(
-        sprintf("%.0fW",dat1$PowerW), sprintf("Power. %s",dat1$Time), 
+        sprintf("%.0fW",dat1$PowerW), sprintf("Power. %s",dat1$Time),
+        color="orange"
+      )
+    })
+    
+    output$TempNow <- renderValueBox({
+      req(input$update)
+      dat1 <- tail(EnviDat(),1)
+      valueBox(
+        sprintf("%.2fc",dat1$temp), sprintf("%s %%",dat1$humi),
         color="orange"
       )
     })
