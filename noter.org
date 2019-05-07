@@ -488,3 +488,48 @@ MAC:84:F3:EB:73:CF:A0
 char buffer[50];
 sprintf(buffer, "the current value is %d", i++);
 Serial.println(buffer);
+** Library management
+https://learn.adafruit.com/adafruit-all-about-arduino-libraries-install-use/library-manager
+* Environment sensor
+bme280 bmp280
+https://www.instructables.com/id/Library-for-BMP280/
+Subsequently I had a need to use a BME280, which adds humidity measurement to the pressure and temperature capability of the BMP280. The BME280 is "backward-compatible" with the BMP280 - that is, all the registers and the steps needed to read pressure and temperature from the BME280 are the same as those used for the BMP280. Subsequently I had a need to use a BME280, which adds humidity measurement to the pressure and temperature capability of the BMP280. The BME280 is "backward-compatible" with the BMP280 - that is, all the registers and the steps needed to read pressure and temperature from the BME280 are the same as those used for the BMP280. 
+[2019-04-10 Wed]
+It turns out it is a BMP280 (not bme280)
+Adapted the bme280_adafruit script. It works now.
+
+* Application server setup
+** OS
+   Raspbian Stretch Lite
+   Minimal image based on Debian Stretch
+   Version: April 2019
+   Release date: 2019-04-08
+   Kernel version: 4.14
+SHA-256: 03ec326d45c6eb6cef848cf9a1d6c7315a9410b49a276a6b28e67a40b11fdfcf
+tp@E7470:~/Downloads$ sha256sum  2019-04-08-raspbian-stretch-lite.zip
+         03ec326d45c6eb6cef848cf9a1d6c7315a9410b49a276a6b28e67a40b11fdfcf  2019-04-08-raspbian-stretch-lite.zip
+tp@E7470:~/Downloads$ sha256sum  2019-04-08-raspbian-stretch-lite.img 
+d4e7d2caa051432a3b6f320c44939b9f65fd454d957904d1cb9fc1c1683ed716  2019-04-08-raspbian-stretch-lite.img
+tp@E7470:~/Downloads$ sudo dd if=2019-04-08-raspbian-stretch-lite.img of=/dev/mmcblk0
+Remount
+** Network
+Update System/setup_rpi.sh
+Then
+sudo bash setup_rpi.sh
+** Postinstall
+sudo apt install git
+git clone https://github.com/SlyngelKlubben/KamstupReader.git
+** Docker
+https://medium.freecodecamp.org/the-easy-way-to-set-up-docker-on-a-raspberry-pi-7d24ced073ef
+curl -fsSL get.docker.com -o get-docker.sh 
+bash get-docker.sh
+## add to group
+sudo gpasswd -a $USER docker
+newgrp docker 
+newgrp pi
+## Test:
+docker run hello-world
+*** Dashborad
+pi@raspberrypi:~/KamstupReader/Docker/dashboard $ docker build  -t dash .
+
+
