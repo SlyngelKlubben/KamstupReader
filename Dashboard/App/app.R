@@ -25,14 +25,14 @@ source("lib.R")
 
 if(file.exists("config.yml")) {
     Conf <- yaml.load_file("config.yml") ## add symlink locally
-    flog.info("Read config. Using db on %s", Conf$db$host)
+    flog.info("Read config. Using db on %s", Conf$db$profile)
 } else {
     stop("Needs config file to find database")
 }
 pg.new(Conf)
 
 ## get Date Range
-DateRange <-  pg.get(q=sprintf("select min(timestamp), max(timestamp) from tyv", Conf$db$table))
+DateRange <-  pg.get(q=sprintf("select min(timestamp), max(timestamp) from vand", Conf$db$vandtable))
 
 Day1 <- as.Date(DateRange$min)
 Day2 <- as.Date(DateRange$max)
@@ -83,15 +83,19 @@ ui <- fluidPage(
                      , plotlyOutput("kWh")
                      , dataTableOutput("power_table")  
                        )
+             , tabPanel("Enviroment",
+                        plotlyOutput("envi")
+                      , dataTableOutput("envi_table"))
              , tabPanel("Current",
-                        dashboardBody (
-                        fluidRow(
-                          valueBoxOutput("PowerNow")
-                        )
-                        #, fluidRow(
-                        #  valueBoxOutput("Waterflux")
-                        #)
-                        ))
+                       dashboardBody (
+                       fluidRow(
+                         valueBoxOutput("PowerNow")
+                        ,valueBoxOutput("TempNow")
+                       )
+                      #, fluidRow(
+                      #    valueBoxOutput("Waterflux")
+                      # )
+                       ))
               )
       )
    )
@@ -109,39 +113,68 @@ server <- function(input, output) {
                 weekstart=1)
     })
   
-    Dat <- reactive({
+    VandDat <- reactive({
         req(input$date)
-        dat.day(date=input$date, table=Conf$db$table) 
+        dat.day(date=input$date, table=Conf$db$vandtable) 
+    })
+    
+    ElDat <- reactive({
+      req(input$date)
+      dat.day(date=input$date, table=Conf$db$eltable) 
+    })
+    
+    EnviDat <- reactive({
+      req(input$date)
+      dat.day(date=input$date, table=Conf$db$envitable) 
     })
 
     Water <- reactive({
-        req(Dat())
-        dat.water(Dat())
+        req(VandDat())
+        dat.water(VandDat())
     })
 
     WaterRate <- reactive({
         req(Water())
         water.rate(Water())
     })
+    
+    EnviRate <- reactive({
+      req(EnviDat())
+      dat.envi(EnviDat())
+    })
 
     Power <- reactive({
-        kamstrup.power(subset(Dat(), Source=="Kamstrup" & Value > 1))
+        kamstrup.power(subset(ElDat(), Source=="Kamstrup" & Value > 1))
     })
 
     PowerNow <- eventReactive(input$update, {
       dev.last(device="Kamstrup", limit=5) %>% kamstrup.power()
     })
         
-   output$water_rate <- renderPlotly({
+    output$envi <- renderPlotly({
+      req(input$date)
+
+      p1 <- ggplot(EnviDat(), aes(x = timestamp))
+      p1 <- p1 + geom_line(aes(y = temp, colour = "Temperature"))
+      p1 <- p1 + geom_line(aes(y = humi/1, colour = "Humidity"))
+      p1 <- p1 + scale_y_continuous(sec.axis = sec_axis(~.*1, name = "Relative humidity [%]"))
+      p1 <- p1 + scale_colour_manual(values = c("blue", "red"))
+      p1 <- p1 + labs(y = "Air temperature [°C]",x = "Date and time",colour = "Parameter")
+      p1 <- p1 + theme(legend.position = c(0.8, 0.9))
+      
+      ggplotly(p1)
+    })
+    output$water_rate <- renderPlotly({
       req(input$date) 
       p1 <- ggplot(data=WaterRate(), aes(x=Time, y=L_per_min)) + geom_point()+ geom_step() + ggtitle(sprintf("Water Flow %s", input$date))
       ggplotly(p1)
       })
+    
     output$water_total <- renderPlotly({
-     req(input$date) 
-     p1 <- ggplot(transform(Water(), Liter = Total_Liter - Total_Liter[1]), aes(x=Time, y=Liter)) + 
+      req(input$date) 
+      p1 <- ggplot(transform(Water(), Liter = Total_Liter - Total_Liter[1]), aes(x=Time, y=Liter)) + 
         geom_step() + ggtitle(sprintf("Water Consumed %s", input$date))
-     ggplotly(p1)
+      ggplotly(p1)
     })
     output$water_table <- renderDataTable({
         req(input$date)
@@ -173,11 +206,25 @@ server <- function(input, output) {
       , content = function(file) write.xlsx(x=Power(), file)
     )
 
-      output$PowerNow <- renderValueBox({
-        req(input$update)
+    output$PowerNow <- renderValueBox({
+      req(input$update)
       dat1 <- tail(PowerNow(),1)
       with(dat1,flog.trace("Kamstrup: Used: %sW at %s",PowerW, Time))
-      valueBox(sprintf("%.0fW",dat1$PowerW), sprintf("Power. %s",dat1$Time), color="orange")})
+      valueBox(
+        sprintf("%.0fW",dat1$PowerW), sprintf("Power. %s",dat1$Time),
+        color="orange"
+      )
+    })
+    
+    output$TempNow <- renderValueBox({
+      req(input$update)
+      dat1 <- tail(EnviDat(),1)
+      valueBox(
+        sprintf("%.2fc",dat1$temp), sprintf("%s %%",dat1$humi),
+        color="orange"
+      )
+    })
+    
 }
 
 # Run the application 
