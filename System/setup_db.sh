@@ -51,6 +51,8 @@ if grep ^local /etc/postgresql/9.6/main/pg_hba.conf | grep all | grep md5 ; then
 else
     sudo echo "local  all   all   md5" >> /etc/postgresql/9.6/main/pg_hba.conf
     echo "Local login with password enabled"
+    ## TODO: Also needs to comment out line:
+    #local   all             all                                     peer     
 fi
 
 ## Create tables, if not already found
@@ -66,8 +68,8 @@ content text,
 sensorid text, -- Andrew senid
 CONSTRAINT ${TBL}_pkey PRIMARY KEY (id)
 );
-ALTER TABLE ${TBL} OWNER to $DBUSER;
-GRANT ALL on TABLE ${TBL} to $DBUSER;"
+ALTER TABLE public.${TBL} OWNER to $DBUSER;
+GRANT ALL on TABLE public.${TBL} to $DBUSER;"
 	echo "Created table ${TBL}"
     fi
 }
@@ -91,8 +93,8 @@ pir boolean,
 pressure double precision, -- Not in Andrew
 CONSTRAINT ${TBL}_pkey PRIMARY KEY (id)
 );
-ALTER TABLE ${TBL} OWNER to $DBUSER;
-GRANT ALL on TABLE ${TBL} to $DBUSER;"
+ALTER TABLE public.${TBL} OWNER to $DBUSER;
+GRANT ALL on TABLE public.${TBL} to $DBUSER;"
     echo "Created table ${TBL}"
 fi
 
