@@ -20,22 +20,22 @@ else
 fi
 
 ## If DBUSER does not exit, create it
-sudo su - postgres
-if psql postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DBUSER'" | grep 1 ; then
+## sudo su - postgres
+if sudo -u postgres psql postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DBUSER'" | grep 1 ; then
     echo "User $DBUSER already exists in postgres"
 else
-    createuser "$DBUSER"
-    psql -tAc "ALTER USER $DBUSER WITH ENCRYPTED PASSWORD '$DBPW';"
-    psql -tAc "ALTER ROLE $DBUSER LOGIN PASSWORD '$DBPW';"
+    sudo -u postgres createuser "$DBUSER"
+    sudo -u postgres psql -tAc "ALTER USER $DBUSER WITH ENCRYPTED PASSWORD '$DBPW';"
+    sudo -u postgres psql -tAc "ALTER ROLE $DBUSER LOGIN PASSWORD '$DBPW';"
     echo "Created user: '$DBUSER' with password: '$DBPW'"
 fi
 
 ## If DB does not exist, create it
-if psql -lqt | cut -d \| -f 1 | grep -qw "$DB"; then
+if sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -qw "$DB"; then
     echo "Database '$DB' exists in postgres"
 else
-    createdb "$DB" -o $DBUSER
-    psql -tAc "GRANT ALL ON DATABASE $DB TO $DBUSER;"
+    sudo -u postgres createdb "$DB" -o $DBUSER
+    sudo -u postgres psql -tAc "GRANT ALL ON DATABASE $DB TO $DBUSER;"
     echo "Created database: '$DB'"
 fi
 
@@ -43,7 +43,7 @@ fi
 if grep ^local /etc/postgresql/9.6/main/pg_hba.conf | grep all | grep md5 ; then
     echo "Login already enabled"
 else
-    echo "local  all   all   md5" >> /etc/postgresql/9.6/main/pg_hba.conf
+    sudo echo "local  all   all   md5" >> /etc/postgresql/9.6/main/pg_hba.conf
     echo "Local login with password enabled"
 fi
 
@@ -66,15 +66,15 @@ GRANT ALL on TABLE ${TBL} to $DBUSER;"
     fi
 }
 ## el
-make_simple_table el
+sudo -u postgres make_simple_table el
 ## vand
-make_simple_table vand
+sudo -u postgres make_simple_table vand
 ## environment
 TBL="envi"
-if psql -tAc "SELECT 1 FROM pg_tables WHERE tablename = '${TBL}';" | grep 1 ; then
+if sudo -u postgres  psql -tAc "SELECT 1 FROM pg_tables WHERE tablename = '${TBL}';" | grep 1 ; then
     echo "Table '${TBL}' already exists in database $DB"
 else
-    psql -tAc "CREATE TABLE ${TBL}(
+    sudo -u postgres psql -tAc "CREATE TABLE ${TBL}(
 id serial,
 timestamp timestamp with time zone default now(), -- Andrew without time zone?
 content text,
