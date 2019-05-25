@@ -3,6 +3,12 @@ DBUSER="iot"
 DBPW="iot" ## password
 DB="hus"
 
+## Check we are running as root
+if (( $EUID != 0 )); then
+    echo "Please run as root"
+    exit
+fi
+
 ## If DB user does not exist in OS: create it
 ## ref https://superuser.com/questions/336275/find-out-if-user-name-exists
 if id "$DBUSER" >/dev/null 2>&1; then
@@ -50,25 +56,25 @@ fi
 ## Create tables, if not already found
 function make_simple_table {
     TBL=$1
-    if psql -tAc "SELECT 1 FROM pg_tables WHERE tablename = '${TBL}';" | grep 1 ; then
+    if sudo -u postgres psql -tAc "SELECT 1 FROM pg_tables WHERE tablename = '${TBL}';" | grep 1 ; then
 	echo "Table '${TBL}' already exists in database $DB"
     else
-	psql -tAc "CREATE TABLE ${TBL}(
+	sudo -u postgres psql -tAc "CREATE TABLE ${TBL}(
 id serial,
 timestamp timestamp with time zone default now(), -- Andrew without time zone?
 content text,
 sensorid text, -- Andrew senid
 CONSTRAINT ${TBL}_pkey PRIMARY KEY (id)
 );
-ALTER TALBE ${TBL} OWNER to $DBUSER;
+ALTER TABLE ${TBL} OWNER to $DBUSER;
 GRANT ALL on TABLE ${TBL} to $DBUSER;"
 	echo "Created table ${TBL}"
     fi
 }
 ## el
-sudo -u postgres make_simple_table el
+make_simple_table el
 ## vand
-sudo -u postgres make_simple_table vand
+make_simple_table vand
 ## environment
 TBL="envi"
 if sudo -u postgres  psql -tAc "SELECT 1 FROM pg_tables WHERE tablename = '${TBL}';" | grep 1 ; then
@@ -85,7 +91,7 @@ pir boolean,
 pressure double precision, -- Not in Andrew
 CONSTRAINT ${TBL}_pkey PRIMARY KEY (id)
 );
-ALTER TALBE ${TBL} OWNER to $DBUSER;
+ALTER TABLE ${TBL} OWNER to $DBUSER;
 GRANT ALL on TABLE ${TBL} to $DBUSER;"
     echo "Created table ${TBL}"
 fi
