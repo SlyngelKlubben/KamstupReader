@@ -12,7 +12,12 @@ else
 fi
 
 ## If postgres is not installed, install it
-sudo apt install postgresql-9.6
+if [[ -e /etc/postgresql/9.6/main/pg_hba.conf ]] ; then
+    echo "Postgres installed"
+else 
+    sudo apt update
+    sudo apt install postgresql-9.6
+fi
 
 ## If DBUSER does not exit, create it
 sudo su - postgres
