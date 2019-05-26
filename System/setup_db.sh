@@ -9,7 +9,7 @@ P1=$1 ## DROP will drop existing database
 
 ## Check we are running as root
 if (( $EUID != 0 )); then
-    echo "Please run as root"
+    echo "Please run $0 as root"
     exit
 fi
 
@@ -41,10 +41,10 @@ else
 fi
 
 ## DROP database if DROP given as argument
-if [ $P1 == "DROP" ] ; then
+if [ "$P1" == "DROP" ] ; then
     echo "DROP given as argument. Confirm to DROP DATABASE $DB (N/Y)"
     read ANS
-    if [ $ANS == "Y" ] ; then
+    if [ "$ANS" == "Y" ] ; then
 	sudo -u postgres psql -tAc "DROP DATABASE $DB;"
 	echo "DROPED database $DB"
     else
