@@ -3,6 +3,10 @@ DBUSER="iot"
 DBPW="iot" ## password
 DB="hus"
 
+P1=$1 ## DROP will drop existing database
+
+
+
 ## Check we are running as root
 if (( $EUID != 0 )); then
     echo "Please run as root"
@@ -36,6 +40,18 @@ else
     echo "Created user: '$DBUSER' with password: '$DBPW'"
 fi
 
+## DROP database if DROP given as argument
+if [ $P1 == "DROP" ] ; then
+    echo "DROP given as argument. Confirm to DROP DATABASE $DB (N/Y)"
+    read ANS
+    if [ $ANS == "Y" ] ; then
+	sudo -u postgres psql -tAc "DROP DATABASE $DB;"
+	echo "DROPED database $DB"
+    else
+	echo "Bailing out"
+    fi
+fi
+
 ## If DB does not exist, create it
 if sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -qw "$DB"; then
     echo "Database '$DB' exists in postgres"
@@ -49,10 +65,12 @@ fi
 if grep ^local /etc/postgresql/9.6/main/pg_hba.conf | grep all | grep md5 ; then
     echo "Login already enabled"
 else
-    sudo echo "local  all   all   md5" >> /etc/postgresql/9.6/main/pg_hba.conf
-    echo "Local login with password enabled"
-    ## TODO: Also needs to comment out line:
-    #local   all             all                                     peer     
+    if [[ ! -e /etc/postgresql/9.6/main/pg_hba.conf_bu ]]; then
+	sudo cp -b /etc/postgresql/9.6/main/pg_hba.conf /etc/postgresql/9.6/main/pg_hba.conf_bu
+    fi
+    sudo sed -i  '/^local all all peer/ s/peer/md5/' /etc/postgresql/9.6/main/pg_hba.conf
+    echo "Local login with password enabled. Reloading server"
+    sudo service postgresql restart
 fi
 
 ## Create tables, if not already found
@@ -98,3 +116,4 @@ GRANT ALL on TABLE public.${TBL} to $DBUSER;"
     echo "Created table ${TBL}"
 fi
 
+echo "Database setup complete"
