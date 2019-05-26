@@ -40,6 +40,10 @@ else
     echo "Created user: '$DBUSER' with password: '$DBPW'"
 fi
 
+echo "Log in with: "
+echo "psql -U $DBUSER -W $DB"
+echo "And type password: $DBPW"
+
 ## DROP database if DROP given as argument
 if [ "$P1" == "DROP" ] ; then
     echo "DROP given as argument. Confirm to DROP DATABASE $DB (N/Y)"
@@ -68,7 +72,7 @@ else
     if [[ ! -e /etc/postgresql/9.6/main/pg_hba.conf_bu ]]; then
 	sudo cp -b /etc/postgresql/9.6/main/pg_hba.conf /etc/postgresql/9.6/main/pg_hba.conf_bu
     fi
-    sudo sed -i  '/^local all all peer/ s/peer/md5/' /etc/postgresql/9.6/main/pg_hba.conf
+    sudo sed -i  '/^local\s*all\s*all\s*peer/ s/peer/md5/' /etc/postgresql/9.6/main/pg_hba.conf
     echo "Local login with password enabled. Reloading server"
     sudo service postgresql restart
 fi
