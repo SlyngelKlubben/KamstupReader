@@ -5,7 +5,7 @@ DB="hus"
 
 P1=$1 ## DROP will drop existing database
 
-
+PGVER="9.6"
 
 ## Check we are running as root
 if (( $EUID != 0 )); then
@@ -22,11 +22,11 @@ else
 fi
 
 ## If postgres is not installed, install it
-if [[ -e /etc/postgresql/9.6/main/pg_hba.conf ]] ; then
+if [[ -e /etc/postgresql/${PGVER}/main/pg_hba.conf ]] ; then
     echo "Postgres installed"
 else 
     sudo apt update
-    sudo apt install postgresql-9.6
+    sudo apt install postgresql-${PGVER}
 fi
 
 ## If DBUSER does not exit, create it
@@ -69,13 +69,13 @@ else
 fi
 
 ## Set password login if not already done
-if grep ^local /etc/postgresql/9.6/main/pg_hba.conf | grep all | grep md5 ; then
+if grep ^local /etc/postgresql/${PGVER}/main/pg_hba.conf | grep all | grep md5 ; then
     echo "Login already enabled"
 else
-    if [[ ! -e /etc/postgresql/9.6/main/pg_hba.conf_bu ]]; then
-	sudo cp -b /etc/postgresql/9.6/main/pg_hba.conf /etc/postgresql/9.6/main/pg_hba.conf_bu
+    if [[ ! -e /etc/postgresql/${PGVER}/main/pg_hba.conf_bu ]]; then
+	sudo cp -b /etc/postgresql/${PGVER}/main/pg_hba.conf /etc/postgresql/${PGVER}/main/pg_hba.conf_bu
     fi
-    sudo sed -i  '/^local\s*all\s*all\s*peer/ s/peer/md5/' /etc/postgresql/9.6/main/pg_hba.conf
+    sudo sed -i  '/^local\s*all\s*all\s*peer/ s/peer/md5/' /etc/postgresql/${PGVER}/main/pg_hba.conf
     echo "Local login with password enabled. Reloading server"
     sudo service postgresql restart
 fi
