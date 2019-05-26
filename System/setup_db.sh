@@ -50,6 +50,9 @@ if [ "$P1" == "DROP" ] ; then
     read ANS
     if [ "$ANS" == "Y" ] ; then
 	sudo -u postgres psql -tAc "DROP DATABASE $DB;"
+	sudo -u postgres psql -tAc "DROP TABLE el;"
+	sudo -u postgres psql -tAc "DROP TABLE vand;"
+	sudo -u postgres psql -tAc "DROP TABLE envi;"
 	echo "DROPED database $DB"
     else
 	echo "Bailing out"
