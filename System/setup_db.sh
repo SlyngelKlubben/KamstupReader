@@ -86,7 +86,7 @@ function make_simple_table {
     if sudo -u postgres psql -tAc "SELECT 1 FROM pg_tables WHERE tablename = '${TBL}';" | grep 1 ; then
 	echo "Table '${TBL}' already exists in database $DB"
     else
-	sudo -u postgres psql -tAc "CREATE TABLE public.${TBL}(
+	sudo -u postgres psql -tA -c "\\connect $DB" -c "CREATE TABLE public.${TBL}(
 id serial,
 timestamp timestamp with time zone default now(), -- Andrew without time zone?
 content text,
@@ -107,7 +107,7 @@ TBL="envi"
 if sudo -u postgres  psql -tAc "SELECT 1 FROM pg_tables WHERE tablename = '${TBL}';" | grep 1 ; then
     echo "Table '${TBL}' already exists in database $DB"
 else
-    sudo -u postgres psql -tAc "CREATE TABLE public.${TBL}(
+    sudo -u postgres psql -tA -c "\\connect $DB" -c "CREATE TABLE public.${TBL}(
 id serial,
 timestamp timestamp with time zone default now(), -- Andrew without time zone?
 content text,
