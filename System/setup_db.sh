@@ -56,7 +56,7 @@ fi
 if sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -qw "$DB"; then
     echo "Database '$DB' exists in postgres"
 else
-    sudo -u postgres createdb "$DB" -o $DBUSER
+    sudo -u postgres createdb "$DB" -O $DBUSER
     sudo -u postgres psql -tAc "GRANT ALL ON DATABASE $DB TO $DBUSER;"
     echo "Created database: '$DB'"
 fi
