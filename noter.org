@@ -406,6 +406,9 @@ Balenalib has a lot of images of this form:
  balenalib/<hw>-<distro>-<lang_stack>:<lang_ver>-<distro_ver>-(build|run)-<yyyymmdd>
 See https://www.balena.io/docs/reference/base-images/base-images/
 *** Workflow
+See Dashboard App.  Running the Dashboard from docker above
+1. cd Dashboard/App
+
     - docker build -t das2 .
     - docker run -p 3838:3838 dash2:latest
 *** Notes
@@ -416,6 +419,14 @@ sudo docker run -it -p 3838:3838 slyngel:latest
 docker run -it -p 80:3838 app:latest
 
 ** Starting after boot
+## Run pRest server
+cd /opt/Prest/ && ./prest-linux-arm-7 > /opt/Prest/prest.log &
+
+## Run dashboard
+cd
+/bin/sleep 10
+/usr/bin/docker run --rm -d -p 80:3838 app:latest &
+
 
 ** TODO Try basing on openanalytic simage
 See https://github.com/openanalytics/shinyproxy-template/blob/master/Dockerfile
@@ -498,7 +509,7 @@ Subsequently I had a need to use a BME280, which adds humidity measurement to th
 It turns out it is a BMP280 (not bme280)
 Adapted the bme280_adafruit script. It works now.
 
-* Application server setup
+* Application server setup [2019-05-07 Tue]
 ** OS
    Raspbian Stretch Lite
    Minimal image based on Debian Stretch
@@ -507,7 +518,7 @@ Adapted the bme280_adafruit script. It works now.
    Kernel version: 4.14
 SHA-256: 03ec326d45c6eb6cef848cf9a1d6c7315a9410b49a276a6b28e67a40b11fdfcf
 tp@E7470:~/Downloads$ sha256sum  2019-04-08-raspbian-stretch-lite.zip
-         03ec326d45c6eb6cef848cf9a1d6c7315a9410b49a276a6b28e67a40b11fdfcf  2019-04-08-raspbian-stretch-lite.zip
+03ec326d45c6eb6cef848cf9a1d6c7315a9410b49a276a6b28e67a40b11fdfcf  2019-04-08-raspbian-stretch-lite.zip
 tp@E7470:~/Downloads$ sha256sum  2019-04-08-raspbian-stretch-lite.img 
 d4e7d2caa051432a3b6f320c44939b9f65fd454d957904d1cb9fc1c1683ed716  2019-04-08-raspbian-stretch-lite.img
 tp@E7470:~/Downloads$ sudo dd if=2019-04-08-raspbian-stretch-lite.img of=/dev/mmcblk0
@@ -531,5 +542,46 @@ newgrp pi
 docker run hello-world
 *** Dashborad
 pi@raspberrypi:~/KamstupReader/Docker/dashboard $ docker build  -t dash .
+## Later failed to load after compilation
 
+Copying the docker image
+pi@pi3:~/KamstupReader/Docker/dashboard $ docker save  app:latest | bzip2 | ssh pi@10.0.0.235 'bunzip2 | docker load'
+* Automated setup
+** Configuration
+We should have all configuration in a single YAML:
+*** setup_pi:
+SD="/media/tp"
+ROOTFS="${SD}/rootfs"
+BOOT="$SD/boot"
+SSID="TelenorC04AFB"
+PSK="CEA530B3C2"
+IP="10.0.0.235"
+ROUTER="10.0.0.1"
+** Install Raspberry pi
+System/setup_pi.sh
+** Setup database
+cd System
+sudo bash setup_db.sh
+* Backup to remote machine:
+sudo su - postgres
+pg_dump -d hus  -Fc | ssh tp@10.0.0.37 'cat > hus_2019-05-26.pgdump'
+## restoring
+pg_restore -d hus -c hus_2019-05-26.pgdump
+* Convert to new schema
+[2019-05-25 lør]
+** One table per device type
+- id
+- timestamp
+- content
+** Postgres
+ref https://stackoverflow.com/questions/31284514/how-do-i-copy-data-from-one-table-to-another-in-postgres-using-copy-command
+## Create the new tables
+INSERT INTO el
+SELECT * FROM tyv where content like 'Kamstrup%';
+
+INSERT INTO vand
+SELECT * FROM tyv where content like 'Sensus620%';
+
+INSERT INTO vand
+SELECT * FROM tyv where content like 'WaterLeakTest%';
 
