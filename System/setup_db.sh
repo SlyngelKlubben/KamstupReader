@@ -90,7 +90,7 @@ function make_simple_table {
 id serial,
 timestamp timestamp with time zone default now(), -- Andrew without time zone?
 content text,
-sensorid text, -- Andrew senid
+senid text, -- sonsorid
 CONSTRAINT ${TBL}_pkey PRIMARY KEY (id)
 );
 ALTER TABLE public.${TBL} OWNER to $DBUSER;
@@ -111,7 +111,7 @@ else
 id serial,
 timestamp timestamp with time zone default now(), -- Andrew without time zone?
 content text,
-sensorid text, -- Andrew senid
+senid text, -- sensorid
 temp double precision,
 humi double precision,
 pir boolean,
