@@ -84,7 +84,9 @@ ui <- fluidPage(
                      , dataTableOutput("power_table")  
                        )
              , tabPanel("Enviroment",
-                        plotlyOutput("envi")
+                        plotlyOutput("temp_hum_plot")
+                        ## plotlyOutput("envi")
+                      , plotlyOutput("hum_temp_cor")
                       , dataTableOutput("envi_table"))
              , tabPanel("Current",
                        dashboardBody (
@@ -150,6 +152,14 @@ server <- function(input, output) {
     PowerNow <- eventReactive(input$update, {
       dev.last(device="Kamstrup", limit=5) %>% kamstrup.power()
     })
+    
+    output$temp_hum_plot <- renderPlotly({
+      req(input$date)
+      d1 <- rbind(transform(EnviDat(), value=temp, Var = "Temperature"), 
+                  transform(EnviDat(), value=humi, Var = "Humidity"))
+      p1 <- ggplot(data = d1, aes(x=timestamp, y=value, color = factor(Var))) + geom_line() + facet_grid( Var ~ ., scales="free")
+      ggplotly(p1)
+    })
         
     output$envi <- renderPlotly({
       req(input$date)
@@ -160,10 +170,22 @@ server <- function(input, output) {
       p1 <- p1 + scale_y_continuous(sec.axis = sec_axis(~.*1, name = "Relative humidity [%]"))
       p1 <- p1 + scale_colour_manual(values = c("blue", "red"))
       p1 <- p1 + labs(y = "Air temperature [°C]",x = "Date and time",colour = "Parameter")
-      p1 <- p1 + theme(legend.position = c(0.8, 0.9))
+      p1 <- p1 + theme(legend.position = c(0.8, 0.9)) + ggtitle(sprintf("Temperature and humidity, %s", input$date))
       
+      ggplotly(p1) %>% layout(yaxis2 = list(overlaying = "y", side = "right", title = "Relative humidity [%]"))
+    })
+    
+    output$hum_temp_cor <- renderPlotly({
+      req(input$date) 
+      p1 <- ggplot(EnviDat(), aes(x = temp, y=humi, color = Time)) + geom_point() + ggtitle(sprintf("Humidity vs Temperature, %s", input$date))
       ggplotly(p1)
     })
+    
+    output$envi_table <- renderDataTable({
+      req(input$date)
+      EnviDat()
+    }, options = list(pageLength = 10))
+    
     output$water_rate <- renderPlotly({
       req(input$date) 
       p1 <- ggplot(data=WaterRate(), aes(x=Time, y=L_per_min)) + geom_point()+ geom_step() + ggtitle(sprintf("Water Flow %s", input$date))
