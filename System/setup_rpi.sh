@@ -43,7 +43,7 @@ else
 interface wlan0
 static ip_address=$IP/24
 static routers=$ROUTER
-static domain_name_servers=$ROUTER
+static domain_name_servers=$ROUTER 8.8.8.8 8.8.4.4
 EOF
 fi
 
