@@ -103,7 +103,7 @@ fi
 ## Create tables, if not already found
 function make_simple_table {
     TBL=$1
-    if sudo -u postgres psql -tAc "SELECT 1 FROM pg_tables WHERE tablename = '${TBL}';" $DB | grep 1 ; then
+    if sudo -u postgres psql -tAc "SELECT 1 FROM pg_tables WHERE tablename = '${TBL}';" $DB | grep 1  > /dev/null ; then
 	echo "Table '${TBL}' already exists in database $DB"
     else
 	sudo -u postgres psql -tA -c "\\connect $DB" -c "CREATE TABLE public.${TBL}(
@@ -124,7 +124,7 @@ make_simple_table el
 make_simple_table vand
 ## environment
 TBL="envi"
-if sudo -u postgres  psql -tAc "SELECT 1 FROM pg_tables WHERE tablename = '${TBL}';" $DB | grep 1 ; then
+if sudo -u postgres  psql -tAc "SELECT 1 FROM pg_tables WHERE tablename = '${TBL}';" $DB | grep 1  > /dev/null ; then
     echo "Table '${TBL}' already exists in database $DB"
 else
     sudo -u postgres psql -tA -c "\\connect $DB" -c "CREATE TABLE public.${TBL}(
