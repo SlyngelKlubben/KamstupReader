@@ -546,6 +546,10 @@ pi@raspberrypi:~/KamstupReader/Docker/dashboard $ docker build  -t dash .
 
 Copying the docker image
 pi@pi3:~/KamstupReader/Docker/dashboard $ docker save  app:latest | bzip2 | ssh pi@10.0.0.235 'bunzip2 | docker load'
+*** [2019-06-05 ons]
+This comiles successfully:
+~/KamstupReader/Docker/balenalib
+
 * Automated setup
 ** Configuration
 We should have all configuration in a single YAML:

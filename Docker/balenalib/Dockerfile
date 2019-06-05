@@ -26,8 +26,8 @@ RUN apt install r-base \
 ENV LC_ALL C.UTF-8
 ENV LANG en_US.UTF-8
 
-RUN mkdir /root/Dash2
-COPY Dash2/ /root/Dash2
+RUN mkdir /root/App
+COPY ../../Dashboard/App/ /root/App
 
 EXPOSE 3838
 
