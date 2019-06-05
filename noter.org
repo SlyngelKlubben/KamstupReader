@@ -549,6 +549,21 @@ pi@pi3:~/KamstupReader/Docker/dashboard $ docker save  app:latest | bzip2 | ssh 
 *** [2019-06-05 ons]
 This comiles successfully:
 ~/KamstupReader/Docker/balenalib
+It is the same as the one in ~/KamstupReader/Dashboard/App
+So to build docker app:
+pi@raspberrypi:~/KamstupReader/Dashboard/App $ docker build -t app .
+docker run app:latest
+Works but does not connect to db
+Nice to have postgres cient for testing:
+sudo apt install postgresql-client
+needed to edit postgresql.conf as well!
+pi@raspberrypi:~/KamstupReader/Dashboard/App $ docker run -it -p 80:3838 app:latest 
+**** Restoring a pg_dump
+sudo -u postgres psql -tAc "DROP table el cascade;"
+sudo -u postgres psql -tAc "DROP table el cascade;" hus
+sudo -u postgres psql -tAc "DROP table vand cascade;" hus
+sudo -u postgres psql -tAc "DROP table envi cascade;" hus
+pi@raspberrypi:~/KamstupReader/System $ sudo -u postgres pg_restore -d hus hus_andrew_2019-06-03.pgdump 
 
 * Automated setup
 ** Configuration
