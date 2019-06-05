@@ -103,7 +103,7 @@ fi
 ## Create tables, if not already found
 function make_simple_table {
     TBL=$1
-    if sudo -u postgres psql -tAc "SELECT 1 FROM pg_tables WHERE tablename = '${TBL}';" | grep 1 ; then
+    if sudo -u postgres psql -tAc "SELECT 1 FROM pg_tables WHERE tablename = '${TBL}';" $DB | grep 1 ; then
 	echo "Table '${TBL}' already exists in database $DB"
     else
 	sudo -u postgres psql -tA -c "\\connect $DB" -c "CREATE TABLE public.${TBL}(
@@ -114,8 +114,8 @@ senid text, -- sonsorid
 CONSTRAINT ${TBL}_pkey PRIMARY KEY (id)
 );
 ALTER TABLE public.${TBL} OWNER to $DBUSER;
-GRANT ALL on TABLE public.${TBL} to $DBUSER;"
-	echo "Created table ${TBL}"
+GRANT ALL on TABLE public.${TBL} to $DBUSER;" $DB
+	echo "Created table ${TBL}" 
     fi
 }
 ## el
@@ -124,7 +124,7 @@ make_simple_table el
 make_simple_table vand
 ## environment
 TBL="envi"
-if sudo -u postgres  psql -tAc "SELECT 1 FROM pg_tables WHERE tablename = '${TBL}';" | grep 1 ; then
+if sudo -u postgres  psql -tAc "SELECT 1 FROM pg_tables WHERE tablename = '${TBL}';" $DB | grep 1 ; then
     echo "Table '${TBL}' already exists in database $DB"
 else
     sudo -u postgres psql -tA -c "\\connect $DB" -c "CREATE TABLE public.${TBL}(
@@ -139,7 +139,7 @@ pressure double precision, -- Not in Andrew
 CONSTRAINT ${TBL}_pkey PRIMARY KEY (id)
 );
 ALTER TABLE public.${TBL} OWNER to $DBUSER;
-GRANT ALL on TABLE public.${TBL} to $DBUSER;"
+GRANT ALL on TABLE public.${TBL} to $DBUSER;" $DB
     echo "Created table ${TBL}"
 fi
 
