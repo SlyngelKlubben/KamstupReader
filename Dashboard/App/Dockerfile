@@ -22,7 +22,8 @@ RUN apt install r-base \
     r-cran-shinydashboard \
     r-cran-glue \
     r-cran-openxlsx \
-    r-cran-lubridate
+    r-cran-lubridate \
+    postgresql-client
 
 ENV LC_ALL C.UTF-8
 ENV LANG en_US.UTF-8
