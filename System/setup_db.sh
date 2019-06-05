@@ -69,7 +69,7 @@ else
 fi
 
 ## Set password login if not already done
-if grep ^local /etc/postgresql/${PGVER}/main/pg_hba.conf | grep all | grep md5 ; then
+if grep ^local /etc/postgresql/${PGVER}/main/pg_hba.conf | grep all | grep md5 > /dev/null; then
     echo "Password already enabled"
 else
     if [[ ! -e /etc/postgresql/${PGVER}/main/pg_hba.conf_bu ]]; then
@@ -87,7 +87,7 @@ fi
 
 ## allow connections from external hosts
 PGCONF="/etc/postgresql/${PGVER}/main/postgresql.conf"
-if grep -e "^listen_addresses\s*=\s*'\*'" $PGCONF  ; then
+if grep -e "^listen_addresses\s*=\s*'\*'" $PGCONF > /dev/null ; then
     echo "Remote login already enabled"
 else
     if [[ ! -e ${PGCONF}_bu ]]; then
