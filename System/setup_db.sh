@@ -49,10 +49,10 @@ if [ "$P1" == "DROP" ] ; then
     echo "DROP given as argument. Confirm to DROP DATABASE $DB (N/Y)"
     read ANS
     if [ "$ANS" == "Y" ] ; then
+	sudo -u postgres psql -tAc "DROP TABLE el CASCADE;" $DB
+	sudo -u postgres psql -tAc "DROP TABLE vand CASCADE;" $DB
+	sudo -u postgres psql -tAc "DROP TABLE envi CASCADE;" $DB
 	sudo -u postgres psql -tAc "DROP DATABASE $DB;"
-	sudo -u postgres psql -tAc "DROP TABLE el;"
-	sudo -u postgres psql -tAc "DROP TABLE vand;"
-	sudo -u postgres psql -tAc "DROP TABLE envi;"
 	echo "DROPED database $DB"
     else
 	echo "Bailing out"
@@ -70,15 +70,35 @@ fi
 
 ## Set password login if not already done
 if grep ^local /etc/postgresql/${PGVER}/main/pg_hba.conf | grep all | grep md5 ; then
-    echo "Login already enabled"
+    echo "Password already enabled"
 else
     if [[ ! -e /etc/postgresql/${PGVER}/main/pg_hba.conf_bu ]]; then
 	sudo cp -b /etc/postgresql/${PGVER}/main/pg_hba.conf /etc/postgresql/${PGVER}/main/pg_hba.conf_bu
     fi
     sudo sed -i  '/^local\s*all\s*all\s*peer/ s/peer/md5/' /etc/postgresql/${PGVER}/main/pg_hba.conf
-    echo "Local login with password enabled. Reloading server"
+    if sudo grep -e "^\s*host\s*all\s*all\s*0\.0\.0\.0/0\s*md5"  /etc/postgresql/${PGVER}/main/pg_hba.conf > dev/null ; then
+	echo "Remote login rule already enabled"
+    else
+	echo "host    all             all             0.0.0.0/0               md5" >> /etc/postgresql/${PGVER}/main/pg_hba.conf
+    fi
+    echo "Local and remote login with password enabled. Reloading server"
     sudo service postgresql restart
 fi
+
+## allow connections from external hosts
+PGCONF="/etc/postgresql/${PGVER}/main/postgresql.conf"
+if grep -e "^listen_addresses\s*=\s*'\*'" $PGCONF  ; then
+    echo "Remote login already enabled"
+else
+    if [[ ! -e ${PGCONF}_bu ]]; then
+	sudo cp -b ${PGCONF} ${PGCONF}_bu
+    fi
+    sudo sed -i  '/^#listen_addresses/ s/#listen_addresses/listen_addresses/' ${PGCONF}
+    sudo sed -i  "/^listen_addresses/ s/localhost/*/" ${PGCONF}
+    echo "Remote login with password enabled. Reloading server"
+    sudo service postgresql restart
+fi
+
 
 ## Create tables, if not already found
 function make_simple_table {
