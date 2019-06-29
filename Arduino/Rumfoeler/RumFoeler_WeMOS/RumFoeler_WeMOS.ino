@@ -8,6 +8,10 @@
 // for http client
 #include <ESP8266WiFiMulti.h>
 #include <ESP8266HTTPClient.h>
+#include <Adafruit_BME280.h>
+#define SEALEVELPRESSURE_HPA (1013.25)
+
+Adafruit_BME280 bme;
 ESP8266WiFiMulti WiFiMulti;
 
 
@@ -18,7 +22,11 @@ const char* ssid = "Viggo";             //!!!!!!!!!!!!!!!!!!!!! modify this
 const char* password = "Mallebr0k";                //!!!!!!!!!!!!!!!!!!!!!modify 
 //const char* ssid = "UniFiHome";             //!!!!!!!!!!!!!!!!!!!!! modify this
 //const char* password = "thorhauge";                //!!!!!!!!!!!!!!!!!!!!!modify 
+//const char* ssid = "TelenorC04AFB";             //!!!!!!!!!!!!!!!!!!!!! modify this
+//const char* password = "CEA530B3C2";                //!!!!!!!!!!!!!!!!!!!!!modify 
+
 const char* dbString = "http://192.168.0.200:3000/hus/public/envi" ; // Change this
+//const char* dbString = "http://192.168.0.47:3000:3000/hus/public/envi" ; // Change this
 
 // local variables
 float deltaTempTrigger = 0.1; // delta C for triggering send
@@ -29,13 +37,19 @@ float lastTempSent = 0.0;
 float lastHumSent = 0.0 ;
 int lastLoopSent = 0    ;
 int CycleCount = 0 ;
+int analogValue = 0;
 // Local vars
 String currentTemp = "";
 String currentHum = "";
+String currentPres = "";
 String MAC = "";
+
+float temperature, humidity, pressure, altitude;
+
 
 WiFiServer server(80);
 
+int lightSensorPin = A0;
 int inputPin = D5;
 int counter = 0;
 int pir_val = 0;
@@ -52,6 +66,9 @@ void setup() {
 
   // PIR setup
   pinMode(inputPin, INPUT);
+
+  // BME280 setup
+  bme.begin(0x76);
  
   // Connect to WiFi network
   Serial.println();
@@ -93,6 +110,7 @@ void loop() {
 
   // PIR read
   pir_val = digitalRead(inputPin);  // read input value
+  analogValue = analogRead(lightSensorPin);
   if (pir_val == HIGH) {            // check if the input is HIGH
     digitalWrite(BUILTIN_LED, LOW);  // turn LED ON
     if (pir_State == LOW) {
@@ -119,67 +137,66 @@ void loop() {
   CycleCount = CycleCount + 1;
 
   // /* Comments
-  if (CycleCount >= delayTrigger) {                    
-    Serial.println(formatTemp()); 
+  if (CycleCount >= delayTrigger) {
+                        
+    delay(2);
+    //Serial.println(formatTemp()); 
+    // wait for WiFi connection
+    // digitalWrite(LED_BUILTIN, LOW);   // turn the LED on (LOW is the voltage level)
+    if((WiFiMulti.run() == WL_CONNECTED)) {
+      HTTPClient http;
+      Serial.print("[HTTP] begin...\n");
+      // configure traged server and url
+      http.begin(dbString); //HTTP
 
-          // wait for WiFi connection
-          // digitalWrite(LED_BUILTIN, LOW);   // turn the LED on (LOW is the voltage level)
-          if((WiFiMulti.run() == WL_CONNECTED)) {
-            HTTPClient http;
-            Serial.print("[HTTP] begin...\n");
-            // configure traged server and url
-            http.begin(dbString); //HTTP
+      Serial.print("[HTTP] GET...\n");
+      currentTemp = bme.readTemperature();//getTemp() ; //String(sht30.cTemp);
+      currentHum =  bme.readHumidity();//String(sht30.humidity) ;
+      currentPres = bme.readPressure() / 100.0F;
+      CycleCount = 0;
 
-            Serial.print("[HTTP] GET...\n");
-           // start connection and send HTTP header
-           // int httpCode = http.POST("{\"content\":\"YES\"}");
-            sht30.get();
-            currentTemp = getTemp() ; //String(sht30.cTemp);
-            currentHum =  String(sht30.humidity) ;
-            CycleCount = 0;
-            //String myIdent = "\"SSHT3_TempC_celler: "  ; // + currentTemp ;
-            //String myPre = "{\"content\":" ;
-            //String myPost = "\"}" ;
-            //String myJson = myPre + myIdent + currentTemp + myPost ;
-            //Serial.println(myJson);
-
-            String myPreTemp = "{\"temp\":\"" ;
-            String myPreHumi = "\",\"humi\":\"";
-            String myPrePir = "\",\"pir\":\"";
-            String myPreSId = "\",\"senid\":\"";
-            String myPost = "\"}" ;
-            String myJson = myPreTemp + currentTemp + myPreHumi + currentHum + myPrePir + pir_pg_state + myPreSId + WiFi.macAddress() + myPost ;
-            Serial.println(myJson);
+      String myPreTemp = "{\"temp\":\"" ;
+      String myPreHumi = "\",\"humi\":\"";
+      String myPrePir = "\",\"pir\":\"";
+      String myPreSId = "\",\"senid\":\"";
+      String myPrePres = "\",\"press\":\"";
+      String myPreLight = "\",\"light\":\"";
+      String myPost = "\"}" ;
+      //String myJson = myPreTemp + currentTemp + myPreHumi + currentHum + myPrePir + pir_pg_state + myPreSId + WiFi.macAddress() + myPost ;
+      String myJson = myPreTemp + currentTemp + myPreHumi + currentHum + myPrePir + pir_pg_state + myPreSId + WiFi.macAddress() + myPrePres + currentPres + myPreLight + analogValue + myPost ;
+      Serial.println(myJson);
 
 
-            
-            int httpCode = http.POST(myJson);
-            // httpCode will be negative on error
-            if(httpCode > 0) {
-              // HTTP header has been send and Server response header has been handled
-              Serial.printf("[HTTP] GET... code: %d\n", httpCode);
+      
+      int httpCode = http.POST(myJson);
+      // httpCode will be negative on error
+      if(httpCode > 0) {
+        // HTTP header has been send and Server response header has been handled
+        Serial.printf("[HTTP] GET... code: %d\n", httpCode);
 
-              // file found at server
-              if(httpCode == HTTP_CODE_OK) {
-                  String payload = http.getString();
-                  Serial.println(payload);
-              }
-            } else {
-              Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
-            }
-
-            Serial.println("Direct: TempC");
-            Serial.println(sht30.cTemp);
-            Serial.println("Direct: TempF");
-            Serial.println(sht30.fTemp);
-            Serial.println("Direct: Hum");
-            Serial.println(sht30.humidity);
-            Serial.println("///");
-
-            http.end();
-            }
-          //digitalWrite(LED_BUILTIN, HIGH);   // turn the LED off (HIGH is the voltage level)
+        // file found at server
+        if(httpCode == HTTP_CODE_OK) {
+            String payload = http.getString();
+            Serial.println(payload);
         }
+      } else {
+        Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+      }
+
+      Serial.println("Direct: TempC");
+      Serial.println(currentTemp);
+      Serial.println("Direct: Hum");
+      Serial.println(currentHum);
+      Serial.println("Direct: Pressiure");
+      Serial.println(currentPres);
+      Serial.println("Direct: Light");
+      Serial.println(analogValue);
+      Serial.println("///");
+
+      http.end();
+      }
+    //digitalWrite(LED_BUILTIN, HIGH);   // turn the LED off (HIGH is the voltage level)
+  }
 
 // Comments */ 
   
@@ -215,11 +232,9 @@ void loop() {
   if (request.indexOf("/GetEnviroment") != -1){
     sht30.get();
     Serial.print("Temperature in Celsius : ");
-    Serial.println(sht30.cTemp);
-    Serial.print("Temperature in Fahrenheit : ");
-    Serial.println(sht30.fTemp);
+    Serial.println(currentTemp);
     Serial.print("Relative Humidity : ");
-    Serial.println(sht30.humidity);
+    Serial.println(currentHum);
     Serial.println();
     
   }
@@ -244,9 +259,9 @@ void loop() {
   }
 
   client.print("<br>Temp is: ");
-  client.print(sht30.cTemp);
+  client.print(currentTemp);
   client.print("<br>Humidity is: ");
-  client.print(sht30.humidity);
+  client.print(currentHum);
     
   client.println("<br><br>");
   client.println("Click <a href=\"/LED=ON\">here</a> turn the LED on pin 5 ON<br>");
@@ -265,34 +280,4 @@ void loop() {
   Serial.println("Client disconnected");
   Serial.println("");
  
-}
-
-void getEnv(){
-  sht30.get();
-  Serial.print("Temperature in Celsius : ");
-  Serial.println(sht30.cTemp);
-  Serial.print("Temperature in Fahrenheit : ");
-  Serial.println(sht30.fTemp);
-  Serial.print("Relative Humidity : ");
-  Serial.println(sht30.humidity);
-  Serial.println();
-}
-
-String getTemp(){
-  sht30.get();
-  Serial.print("getTemp Temperature in Celsius : ");
-  Serial.println(sht30.cTemp);
-  Serial.print("getTemp as string : ");
-  Serial.println(String(sht30.cTemp));
-  return String(sht30.cTemp);
-}
-
-String formatTemp() {
-  // {"content":"SSHT3_TempC_celler: 32.14"}
-//  String myTemp = getTemp();
-  sht30.get();
-  char buffer[50];
-  sprintf(buffer, "{\"content\":\"TempC_celler: %.2f\"}", sht30.cTemp);
-  Serial.println(buffer);
-  return buffer;
 }
