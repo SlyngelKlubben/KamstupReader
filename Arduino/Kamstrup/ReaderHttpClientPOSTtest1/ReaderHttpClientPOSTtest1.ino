@@ -19,6 +19,24 @@
 ESP8266WiFiMulti WiFiMulti;
 
 String sVal = "";
+            String myPre = "" ;
+            String myIdent = ""  ; 
+            String mySenId = "";
+            String myMac = "";
+            String myThreshold = "";
+            String myThresVal = "" ;
+            String myIvalName = "";
+            String myIval = "" ;            
+            String myPost = "" ;
+            String myJson = ""; 
+
+int iVal = 0;
+int SensorMaxValue=0;
+int SensorMinValue=255;
+int ThresholdUpper = SensorMaxValue-(SensorMaxValue-SensorMinValue)/3; 
+int ThresholdLower = SensorMinValue+(SensorMaxValue-SensorMinValue)/3;      
+
+int Debug = 0; // 0: no debugging
 
 void setup() {
   // initialize digital pin LED_BUILTIN as an output.
@@ -39,12 +57,23 @@ void setup() {
     }
 
     WiFiMulti.addAP(ssid, password);
-
+        delay(1000);
+   
+  Serial.println("");
+  Serial.println("WIFI IP address: ");
+  Serial.println(WiFi.localIP());
 }
 
 void loop() {
-        int iVal = analogRead(A0); // read sensor
-        if( iVal > 100 ) { // calibrate 100
+        iVal = analogRead(A0); // read sensor
+        if ( iVal > SensorMaxValue) {SensorMaxValue=iVal; USE_SERIAL.printf("\nSensorMaxValue set to %d. iVal: %d\n", SensorMaxValue, iVal);}
+        if ( iVal < SensorMinValue) {SensorMinValue=iVal; USE_SERIAL.printf("\nSensorMinValue set to %d. iVal: %d\n", SensorMinValue, iVal);}
+
+        ThresholdUpper = SensorMaxValue-(SensorMaxValue-SensorMinValue)/3; 
+        ThresholdLower = SensorMinValue+(SensorMaxValue-SensorMinValue)/3;      
+
+        if( iVal >  ThresholdLower) { // calibrate 100
+            USE_SERIAL.print("HIP\n");
           // wait for WiFi connection
           digitalWrite(LED_BUILTIN, LOW);   // turn the LED on (LOW is the voltage level)
           if((WiFiMulti.run() == WL_CONNECTED)) {
@@ -58,11 +87,20 @@ void loop() {
            // start connection and send HTTP header
            // int httpCode = http.POST("{\"content\":\"YES\"}");
             sVal = String(iVal);
-            String myIdent = "\"Kamstrup: "  ; // + sVal ;
-            String myPre = "{\"content\":" ;
-            String myPost = "\"}" ;
-            String myJson = myPre + myIdent + sVal + myPost ;
+            myPre = "{\"content\":" ;
+            myIdent = "\"Kamstrup: "  ; // + sVal ;
+            mySenId = "\",\"senid\":\"";
+            myMac = String(WiFi.macAddress());
+            myThreshold = "\",\"threshold\":\"";
+            myThresVal = String(ThresholdLower);
+            myIvalName = "\",\"intensity\":\"";
+            myIval = String(iVal);            
+            myPost = "\"}" ;
+            myJson = myPre + myIdent + sVal + mySenId + myMac + myThreshold + myThresVal + myIvalName + myIval + myPost ;
             USE_SERIAL.print(myJson);
+            USE_SERIAL.print("HEP\n");
+            SensorMinValue=SensorMinValue+1; // To avoid drift over time = increase stability of reading
+            SensorMaxValue=SensorMaxValue-1; // To avoid drift over time = increase stability of reading
             if(1) {
               int httpCode = http.POST(myJson);
               // httpCode will be negative on error
@@ -81,10 +119,12 @@ void loop() {
   
             http.end();
               }
+          } else {
+            USE_SERIAL.println("No connection to wifi");
           }
           digitalWrite(LED_BUILTIN, HIGH);   // turn the LED off (HIGH is the voltage level)
         }else {
-           USE_SERIAL.print(sVal);
+          if(Debug > 0) {USE_SERIAL.printf("%d.",iVal);}
         }
     delay(10);
 }
