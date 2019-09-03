@@ -13,10 +13,6 @@
 
 Adafruit_BME280 bme;
 ESP8266WiFiMulti WiFiMulti;
-
-
-#include <WEMOS_SHT3X.h>
-SHT3X sht30(0x45);
  
 const char* ssid = "Viggo";             //!!!!!!!!!!!!!!!!!!!!! modify this
 const char* password = "Mallebr0k";                //!!!!!!!!!!!!!!!!!!!!!modify 
@@ -25,8 +21,8 @@ const char* password = "Mallebr0k";                //!!!!!!!!!!!!!!!!!!!!!modify
 //const char* ssid = "TelenorC04AFB";             //!!!!!!!!!!!!!!!!!!!!! modify this
 //const char* password = "CEA530B3C2";                //!!!!!!!!!!!!!!!!!!!!!modify 
 
-const char* dbString = "http://192.168.0.200:3000/hus/public/envi" ; // Change this
-//const char* dbString = "http://192.168.0.47:3000:3000/hus/public/envi" ; // Change this
+const char* dbString = "http://192.168.1.200:3000/hus/public/envi" ; // Change this
+//const char* dbString = "http://192.168.0.47:3000/hus/public/envi" ; // Change this
 
 // local variables
 float deltaTempTrigger = 0.1; // delta C for triggering send
@@ -42,6 +38,7 @@ int analogValue = 0;
 String currentTemp = "";
 String currentHum = "";
 String currentPres = "";
+String currentElev = "";
 String MAC = "";
 
 float temperature, humidity, pressure, altitude;
@@ -58,6 +55,8 @@ bool pir_pg_state = false;
 
 void setup() {
   Serial.begin(115200);
+  pinMode(D6, OUTPUT);
+  pinMode(D7, OUTPUT);
   delay(10);
 
   // Diode setup
@@ -66,12 +65,18 @@ void setup() {
 
   // PIR setup
   pinMode(inputPin, INPUT);
+  digitalWrite(D6, HIGH);
+  digitalWrite(D7, LOW);
 
   // BME280 setup
-  bme.begin(0x76);
+  //bme.begin(0x76);
+  if (!bme.begin(0x76)) {
+  Serial.println("Could not find a valid BME280 sensor, check wiring!");
+  while (1);
+  }
  
   // Connect to WiFi network
-  Serial.println();
+  Serial.println(); 
   Serial.println();
   Serial.print("Connecting to ");
   Serial.println(ssid);
@@ -153,6 +158,7 @@ void loop() {
       currentTemp = bme.readTemperature();//getTemp() ; //String(sht30.cTemp);
       currentHum =  bme.readHumidity();//String(sht30.humidity) ;
       currentPres = bme.readPressure() / 100.0F;
+      currentElev = bme.readAltitude(SEALEVELPRESSURE_HPA);
       CycleCount = 0;
 
       String myPreTemp = "{\"temp\":\"" ;
@@ -187,8 +193,10 @@ void loop() {
       Serial.println(currentTemp);
       Serial.println("Direct: Hum");
       Serial.println(currentHum);
-      Serial.println("Direct: Pressiure");
+      Serial.println("Direct: Pressure");
       Serial.println(currentPres);
+      Serial.println("Elevation");
+      Serial.println(currentElev);
       Serial.println("Direct: Light");
       Serial.println(analogValue);
       Serial.println("///");
@@ -230,11 +238,14 @@ void loop() {
   }
  
   if (request.indexOf("/GetEnviroment") != -1){
-    sht30.get();
-    Serial.print("Temperature in Celsius : ");
+    Serial.println("Direct: TempC");
     Serial.println(currentTemp);
-    Serial.print("Relative Humidity : ");
+    Serial.println("Direct: Hum");
     Serial.println(currentHum);
+    Serial.println("Direct: Pressure");
+    Serial.println(currentPres);
+    Serial.println("Direct: Light");
+    Serial.println(analogValue);
     Serial.println();
     
   }
