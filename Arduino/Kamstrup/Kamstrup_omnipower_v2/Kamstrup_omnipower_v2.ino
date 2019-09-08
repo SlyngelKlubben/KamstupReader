@@ -160,7 +160,7 @@ void wifi_signal(char* s) {
    * From https://github.com/esp8266/Arduino/issues/132
    * String conversion:  https://forum.arduino.cc/index.php?topic=228884.msg3102705#msg3102705
    */
-  sprintf(s, "\"signal\":%d, \"IP\":\"%s\", \"MAC\":\"%s\",\"senid\":\"%s\"", WiFi.RSSI(), WiFi.localIP().toString().c_str(), WiFi.macAddress().c_str(), WiFi.macAddress().c_str());
+  sprintf(s, "\"signal\":%d, \"ip\":\"%s\", \"mac\":\"%s\",\"senid\":\"%s\"", WiFi.RSSI(), WiFi.localIP().toString().c_str(), WiFi.macAddress().c_str(), WiFi.macAddress().c_str());
 }
 
 void wifi_connect() {
