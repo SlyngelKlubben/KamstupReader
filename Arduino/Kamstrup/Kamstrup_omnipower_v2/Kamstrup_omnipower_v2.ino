@@ -101,7 +101,7 @@ void kamstrup_values(char* s) {
    */
    // One signal each Whour = 3600W*s = 3600*1000W*ms
    Power_W = 3.6e6 / delta_ms;
-  sprintf(s, "\"content\":\"Kamstrup: %d\", \"power_w\":%.2f, \"intensity\":%d, \"threshold\":%d",iVal, Power_W, iVal);
+  sprintf(s, "\"content\":\"Kamstrup: %d\", \"power_w\":%.2f, \"intensity\":%d, \"threshold\":%d",iVal, Power_W, iVal, ThresholdLower);
 }
 
 void call_db() {
