@@ -8,7 +8,7 @@ DB="hus"
 
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN software_version text;"
 
-PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN power_w text;"
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN power_w real;"
 
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN threshold integer;"
 
@@ -33,7 +33,7 @@ PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN timer_perio
 
 ## vand
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN software_version text;"
-PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN flow_l_per_min text;"
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN flow_l_per_min real;"
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN threshold integer;"
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN signal integer ;"
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN intensity integer ;"
