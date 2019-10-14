@@ -44,7 +44,7 @@ dev.last <- function(device='Kamstrup', table=Conf$db$eltable,limit=10, con=.pg)
     dev.trans(res)
 }
 
-dev.trans <- function(dat, tz.in="UTC", tz.out="CEST") {
+dev.trans <- function(dat, tz.in=Conf$db$timezone, tz.out="CEST") {
     ## todo: get tz from conf
     library(lubridate)
     ## use in dev.last to 
@@ -52,7 +52,7 @@ dev.trans <- function(dat, tz.in="UTC", tz.out="CEST") {
     res <- transform(dat,
                      Source=sub(Pat,'\\1',as.character(content)),
                      Value=as.numeric(sub(Pat,'\\2',as.character(content))),
-                     Time=with_tz(ymd_hms(timestamp), tzone="Europe/Copenhagen"))
+                     Time=with_tz(ymd_hms(timestamp), tzone=tz.in))
     ## transform(plyr::arrange(res, id), TimeDiffSec=c(NA, diff(Time)), TimeDiff=c(NA,diff(timestamp)))
     res <- transform(res, TimeSec = as.numeric(Time))
     res <- transform(res, TimeMin = floor(TimeSec/60))
