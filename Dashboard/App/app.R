@@ -83,11 +83,11 @@ ui <- fluidPage(
                      , plotlyOutput("kWh")
                      , dataTableOutput("power_table")  
                        )
-             , tabPanel("Enviroment",
-                        plotlyOutput("temp_hum_plot")
-                        ## plotlyOutput("envi")
-                      , plotlyOutput("hum_temp_cor")
-                      , dataTableOutput("envi_table"))
+            , tabPanel("Enviroment"
+                     , uiOutput("select_sens")
+                     , plotlyOutput("envi")
+##                     , dataTableOutput("envi_table")
+                       )
              , tabPanel("Current",
                        dashboardBody (
                        fluidRow(
@@ -115,6 +115,11 @@ server <- function(input, output) {
                 weekstart=1)
     })
   
+    output$select_sens <- renderUI({
+        Sensors <- unique(EnviDat()$senid)
+        checkboxGroupInput("sensor_selected", "Select sensor", choices=Sensors, selected=Sensors, inline=TRUE)
+    })
+
     VandDat <- reactive({
         req(input$date)
         dat.day(date=input$date, table=Conf$db$vandtable) 
@@ -163,18 +168,14 @@ server <- function(input, output) {
         
     output$envi <- renderPlotly({
       req(input$date)
-
-      p1 <- ggplot(EnviDat(), aes(x = timestamp))
-      p1 <- p1 + geom_line(aes(y = temp, colour = "Temperature"))
-      p1 <- p1 + geom_line(aes(y = humi/1, colour = "Humidity"))
-      p1 <- p1 + scale_y_continuous(sec.axis = sec_axis(~.*1, name = "Relative humidity [%]"))
-      p1 <- p1 + scale_colour_manual(values = c("blue", "red"))
-      p1 <- p1 + labs(y = "Air temperature [°C]",x = "Date and time",colour = "Parameter")
-      p1 <- p1 + theme(legend.position = c(0.8, 0.9)) + ggtitle(sprintf("Temperature and humidity, %s", input$date))
-      
-      ggplotly(p1) %>% layout(yaxis2 = list(overlaying = "y", side = "right", title = "Relative humidity [%]"))
+      d1 <- EnviDat()
+      if(length(input$sensor_selected) >0)
+          d1 <- subset(d1, senid %in% input$sensor_selected)
+      d2 <- reshape2::melt(d1, id.var= c("id","timestamp","senid", "Time", "TimeSec", "TimeMin"), measure.var=c("temp","humi","pir","press","light"))
+      p2 <- ggplot(d2, aes(x = timestamp, y=value, color=senid)) + geom_line() + facet_grid(variable~., scales="free")
+      ggplotly(p2, height = 800)
     })
-    
+
     output$hum_temp_cor <- renderPlotly({
       req(input$date) 
       p1 <- ggplot(EnviDat(), aes(x = temp, y=humi, color = Time)) + geom_point() + ggtitle(sprintf("Humidity vs Temperature, %s", input$date))
