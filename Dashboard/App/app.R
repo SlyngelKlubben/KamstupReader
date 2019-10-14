@@ -18,6 +18,7 @@ library(futile.logger)
 library(yaml)
 library(openxlsx)
 library(shinydashboard)
+library(reshape2)
 
 ## Local funcs
 source("lib.R")
