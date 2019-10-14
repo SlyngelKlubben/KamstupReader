@@ -63,8 +63,11 @@ kamstrup.power <- function(dat) {
     ## input from dev.last
     ## Kamstrup sends 1 per Wh
     if(is.null(dat) || nrow(dat)==0) return(NULL)
+    ## only one per second. Mine sends sometimes multiple per second, andwe do not use that much power!
+    library(dplyr)
+    dat <- dat %>% group_by(Time) %>% filter(row_number() == 1)
     dat <- transform(subset(dat, Source=="Kamstrup" & Value > 1), TimeDiffSec=c(NA, diff(Time)), TimeDiff=c(NA,diff(timestamp)))
-    transform(dat, PowerW=60*60/TimeDiff, kWh = cumsum(Value > 1)/1000)
+    transform(dat, PowerW=60*60/TimeDiffSec, kWh = cumsum(Value > 1)/1000) ## not more than one per second
 }
 
 kamstrup.power.rate <- function(dat) {
