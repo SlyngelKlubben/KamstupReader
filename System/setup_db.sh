@@ -76,7 +76,7 @@ else
 	sudo cp -b /etc/postgresql/${PGVER}/main/pg_hba.conf /etc/postgresql/${PGVER}/main/pg_hba.conf_bu
     fi
     sudo sed -i  '/^local\s*all\s*all\s*peer/ s/peer/md5/' /etc/postgresql/${PGVER}/main/pg_hba.conf
-    if sudo grep -e "^\s*host\s*all\s*all\s*0\.0\.0\.0/0\s*md5"  /etc/postgresql/${PGVER}/main/pg_hba.conf > dev/null ; then
+    if sudo grep -e "^\s*host\s*all\s*all\s*0\.0\.0\.0/0\s*md5"  /etc/postgresql/${PGVER}/main/pg_hba.conf > /dev/null ; then
 	echo "Remote login rule already enabled"
     else
 	echo "host    all             all             0.0.0.0/0               md5" >> /etc/postgresql/${PGVER}/main/pg_hba.conf
@@ -132,10 +132,11 @@ id serial,
 timestamp timestamp with time zone default now(), -- Andrew without time zone?
 content text,
 senid text, -- sensorid
-temp double precision,
-humi double precision,
-pir boolean,
-pressure double precision, -- Not in Andrew
+temperature double precision,
+humidity double precision,
+pir integer,
+pressure double precision, 
+light double precision, 
 CONSTRAINT ${TBL}_pkey PRIMARY KEY (id)
 );
 ALTER TABLE public.${TBL} OWNER to $DBUSER;

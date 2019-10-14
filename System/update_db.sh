@@ -7,23 +7,14 @@ DB="hus"
 ## Fields:  content software_version content power_w intensity threshold signal IP MAC senid 
 
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN software_version text;"
-
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN power_w real;"
-
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN threshold integer;"
-
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN signal integer ;"
-
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN intensity integer ;"
-
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN \"IP\" text ;"
-
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN \"MAC\" text;"
-
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN time_ms bigint;"
-
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN delta_ms bigint;"
-
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN timer_periods int;"
 
 
@@ -43,3 +34,17 @@ PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN \"MAC\" t
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN time_ms bigint;"
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN delta_ms bigint;"
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN timer_periods int;"
+
+## Envi
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN software_version text;"
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN signal integer ;"
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN \"IP\" text ;"
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN \"MAC\" text;"
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN time_ms bigint;"
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN delta_ms bigint;"
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN timer_periods int;"
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN temperature double precision;"
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN humidity double precision;"
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN pir integer;"
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN pressure double precision;"
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN light double precision;"
