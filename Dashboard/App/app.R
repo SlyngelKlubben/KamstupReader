@@ -23,13 +23,14 @@ library(reshape2)
 ## Local funcs
 source("lib.R")
 
+flog.threshold(TRACE)
 
-if(file.exists("config.yml")) {
-    Conf <- yaml.load_file("config.yml") ## add symlink locally
-    flog.info("Read config. Using db on %s", Conf$db$profile)
-} else {
+if(!file.exists("config.yml")) {
     stop("Needs config file to find database")
 }
+Conf <- yaml.load_file("config.yml") ## add symlink locally
+flog.info("Read config. Using db on %s", Conf$db$profile)
+
 pg.new(Conf)
 
 ## get Date Range
@@ -89,16 +90,16 @@ ui <- fluidPage(
                      , plotlyOutput("envi")
 ##                     , dataTableOutput("envi_table")
                        )
-             , tabPanel("Current",
-                       dashboardBody (
-                       fluidRow(
-                         valueBoxOutput("PowerNow")
-                        ,valueBoxOutput("TempNow")
-                       )
-                      #, fluidRow(
-                      #    valueBoxOutput("Waterflux")
-                      # )
-                       ))
+             ## , tabPanel("Current",
+             ##           dashboardBody (
+             ##           fluidRow(
+             ##             valueBoxOutput("PowerNow")
+             ##            ,valueBoxOutput("TempNow")
+             ##           )
+             ##          #, fluidRow(
+             ##          #    valueBoxOutput("Waterflux")
+             ##          # )
+             ##           ))
               )
       )
    )
@@ -174,7 +175,9 @@ server <- function(input, output) {
           d1 <- subset(d1, MAC %in% input$sensor_selected)
       d2 <- reshape2::melt(d1, id.var= c("id","timestamp","MAC", "Time", "TimeSec", "TimeMin"), measure.var=c("temperature","humidity","pir","pressure","light"))
       p2 <- ggplot(d2, aes(x = timestamp, y=value, color=MAC)) + geom_line() + facet_grid(variable~., scales="free")
-      p2 <- p2 + theme_bw()
+      ##      p2 <- p2 + theme_bw()
+            p2 <- p2 + theme(panel.background = element_blank())
+      ##      p2 <- p2 + theme(panel.background = element_rect(fill="transparent"))
       ggplotly(p2, height = 800)
       
       ## subplot(

@@ -1,5 +1,7 @@
 ## Functions: These should go into separate file later
 pg.new <- function(Conf = list(db=list(host="192.168.0.47",port=5432, db="hus", user="jacob", pw="jacob"))) {
+    library(futile.logger)
+    flog.trace("pg.new")
     library(DBI)
     library(RPostgreSQL)
     con <- dbConnect(RPostgreSQL::PostgreSQL(),
@@ -19,6 +21,7 @@ pg.close <- function(con=.pg) {
 pg.get <- function(q, con=.pg) {
     library(futile.logger)
     library(magrittr)
+    flog.trace("pg.get")
     stmt <- paste(q, ";") %>% sub(';+$',';', .)
     flog.debug(stmt)
     dbGetQuery(conn=con, statement=stmt)  
@@ -26,6 +29,8 @@ pg.get <- function(q, con=.pg) {
 
 dat.day <- function(date, table=Conf$db$vandtable, con=.pg){
     ## Get data from date
+    library(futile.logger)
+    flog.trace("dat.day")
     stmt <- sprintf("SELECT * FROM %s where timestamp >= '%s' AND timestamp < '%s' ORDER BY id DESC", table, as.Date(date), as.Date(date)+1)
     res <- pg.get(q=stmt, con=con)
     if(nrow(res) == 0)
@@ -35,6 +40,8 @@ dat.day <- function(date, table=Conf$db$vandtable, con=.pg){
 
 dev.last <- function(device='Kamstrup', table=Conf$db$eltable,limit=10, con=.pg) {
     ## Get latest data on device
+    library(futile.logger)
+    flog.trace("dev.last")
     stmt <- sprintf("SELECT * FROM %s where content LIKE '%s%%' ORDER BY id DESC", table, device)
     if(!is.na(limit))
         stmt <- sprintf("%s LIMIT %s", stmt, limit)
@@ -44,9 +51,11 @@ dev.last <- function(device='Kamstrup', table=Conf$db$eltable,limit=10, con=.pg)
     dev.trans(res)
 }
 
-dev.trans <- function(dat, tz.in=Conf$db$timezone, tz.out="CEST") {
+dev.trans <- function(dat, tz.in="Europe/Copenhagen", tz.out="Europe/Copenhagen") {
     ## todo: get tz from conf
     library(lubridate)
+    library(futile.logger)
+    flog.trace("dev.trans")
     ## use in dev.last to 
     Pat <- '^(\\S+):.*\\s+(\\d+)$'
     res <- transform(dat,
@@ -62,6 +71,8 @@ dev.trans <- function(dat, tz.in=Conf$db$timezone, tz.out="CEST") {
 kamstrup.power <- function(dat) {
     ## input from dev.last
     ## Kamstrup sends 1 per Wh
+    library(futile.logger)
+    flog.trace("kamstrup.power")
     if(is.null(dat) || nrow(dat)==0) return(NULL)
     ## only one per second. Mine sends sometimes multiple per second, andwe do not use that much power!
     library(dplyr)
@@ -73,6 +84,8 @@ kamstrup.power <- function(dat) {
 kamstrup.power.rate <- function(dat) {
   ## input from dev.last
   ## Kamstrup sends 1 per Wh
+    library(futile.logger)
+    flog.trace("kamstrup.power.rate")
   library(dplyr)
   if(is.null(dat) || nrow(dat)==0) return(NULL)
   dat %>% group_by(TimeMin) %>% mutate(Wh_per_min = n()) %>% filter(row_number()==1) %>% mutate(W = Wh_per_min*60)
@@ -82,6 +95,8 @@ kamstrup.power.rate <- function(dat) {
 
 sensus620.flow <- function(dat) {
     ## Sensus620 reader configured to 1 per dL
+    library(futile.logger)
+    flog.trace("sensus620.flow")
     if(is.null(dat) || nrow(dat)==0) return(NULL)
     dat <- transform(subset(dat, Source=="Sensus620" ), TimeDiffSec=c(NA, diff(Time)), TimeDiff=c(NA,diff(timestamp)))
     transform(dat, Water_L_per_Min = 6/TimeDiff, Water_L_per_Min2 = 6/TimeDiffSec, L_per_Min = Value/90/TimeDiffSec*60)
@@ -90,12 +105,16 @@ sensus620.flow <- function(dat) {
 sensus620.sec.last.L <- function(con=.pg, liter=1) {
     ## Sensus620 reader configured to 1 per dL
     ## Seconds for last liter
+    library(futile.logger)
+    flog.trace("sensus620.sec.last.L")
     d1 <- dev.last("Sensus", limit=10*liter,con=con) %>% head(1)
     Now <- Sys.time()
     as.numeric(Sys.time()) - as.numeric(d1$Time)
 }
 
-dev.last.hour <- function(con=.pg, hour=1, table=Conf$db$vandtable, device="Sensus620", tz="CEST") {
+dev.last.hour <- function(con=.pg, hour=1, table=Conf$db$vandtable, device="Sensus620", tz="Europe/Copenhagen") {
+    library(futile.logger)
+    flog.trace("dev.last.hour")
     Now.utc <- lubridate::with_tz(Sys.time(), tz)
     Res <- pg.get(q=sprintf("SELECT * FROM %s where timestamp >= (NOW() - INTERVAL '%s hours') AND  content LIKE '%s%%'", table, hour, device))
     if(nrow(Res) > 0)
@@ -104,6 +123,8 @@ dev.last.hour <- function(con=.pg, hour=1, table=Conf$db$vandtable, device="Sens
 }
 
 dat.water <- function(dat) {
+    library(futile.logger)
+    flog.trace("dev.water")
     vand <- subset(dat, Source =="Sensus620") %>% 
         sensus620.flow() %>%
         mutate(Total_Liter = cumsum(Value)/90, TimeSec = as.numeric(Time)) %>%
@@ -114,6 +135,8 @@ dat.water <- function(dat) {
 
 water.rate <- function(vand) {
     ## Vand
+    library(futile.logger)
+    flog.trace("water.rate")
     vandRate <- vand %>% group_by(TimeMin) %>%  mutate( L_per_min = sum(Value)/90) %>% filter(row_number()==1)
     vandRate
 }
