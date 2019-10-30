@@ -140,3 +140,24 @@ water.rate <- function(vand) {
     vandRate <- vand %>% group_by(TimeMin) %>%  mutate( L_per_min = sum(Value)/90) %>% filter(row_number()==1)
     vandRate
 }
+
+plot.envi <- function(dat, ver = "facet") {
+    d2 <- reshape2::melt(dat, id.var= c("id","timestamp","MAC", "Time", "TimeSec", "TimeMin"), measure.var=c("temperature","humidity","pir","pressure","light"))
+    if(ver == "facet") {
+        p2 <- ggplot(d2, aes(x = timestamp, y=value, color=MAC)) + geom_line() + facet_grid(variable~., scales="free")
+        ## p2 <- p2 + theme_bw()
+        ## p2 <- p2 + theme(panel.background = element_blank())
+        ## p2 <- p2 + theme(panel.background = element_rect(fill="transparent"))
+        return(p2)
+    } else {
+        pT <-  ggplot(subset(d2, variable == "temperature"), aes(x = timestamp, y=value, color=MAC)) + geom_line() 
+        pH <- ggplot(subset(d2, variable == "humidity"), aes(x = timestamp, y=value, color=MAC)) + geom_line()
+        
+    }
+    p2
+}
+
+plot.envi_part <- function(dat, Part = "temperature") {
+    ggplot(dat, aes_string(x="timestamp", y=Part, color = "MAC")) + geom_line()
+}
+

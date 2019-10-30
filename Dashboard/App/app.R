@@ -88,7 +88,9 @@ ui <- fluidPage(
             , tabPanel("Enviroment"
                      , uiOutput("select_sens")
                      , plotlyOutput("envi")
-##                     , dataTableOutput("envi_table")
+                       ##                     , dataTableOutput("envi_table")
+                       , plotlyOutput("envi_temp")
+                       , plotlyOutput("envi_hum")
                        )
              ## , tabPanel("Current",
              ##           dashboardBody (
@@ -167,7 +169,26 @@ server <- function(input, output) {
       p1 <- ggplot(data = d1, aes(x=timestamp, y=value, color = factor(Var))) + geom_line() + facet_grid( Var ~ ., scales="free")
       ggplotly(p1)
     })
-        
+
+    output$envi_temp <- renderPlotly({
+      req(input$date)
+      d1 <- EnviDat()
+      if(length(input$sensor_selected) >0)
+          d1 <- subset(d1, MAC %in% input$sensor_selected)
+      p1 <- plot.envi_part(d1, Part = "temperature")
+      ggplotly(p1)
+    })
+
+    output$envi_hum <- renderPlotly({
+      req(input$date)
+      d1 <- EnviDat()
+      if(length(input$sensor_selected) >0)
+          d1 <- subset(d1, MAC %in% input$sensor_selected)
+      p1 <- plot.envi_part(d1, Part = "humidity")
+      ggplotly(p1)
+    })
+
+    
     output$envi <- renderPlotly({
       req(input$date)
       d1 <- EnviDat()
@@ -176,8 +197,8 @@ server <- function(input, output) {
       d2 <- reshape2::melt(d1, id.var= c("id","timestamp","MAC", "Time", "TimeSec", "TimeMin"), measure.var=c("temperature","humidity","pir","pressure","light"))
       p2 <- ggplot(d2, aes(x = timestamp, y=value, color=MAC)) + geom_line() + facet_grid(variable~., scales="free")
       ## p2 <- p2 + theme_bw()
-      ## p2 <- p2 + theme(panel.background = element_blank())
-      p2 <- p2 + theme(panel.background = element_rect(fill="transparent"))
+      p2 <- p2 + theme(panel.background = element_blank())
+      ## p2 <- p2 + theme(panel.background = element_rect(fill="transparent"))
       ggplotly(p2, height = 800)
       
       ## subplot(
@@ -185,6 +206,8 @@ server <- function(input, output) {
       ##     )
     })
 
+    
+    
     output$hum_temp_cor <- renderPlotly({
       req(input$date) 
       p1 <- ggplot(EnviDat(), aes(x = temp, y=humi, color = Time)) + geom_point() + ggtitle(sprintf("Humidity vs Temperature, %s", input$date))
