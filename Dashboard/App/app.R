@@ -175,11 +175,10 @@ server <- function(input, output) {
           d1 <- subset(d1, MAC %in% input$sensor_selected)
       d2 <- reshape2::melt(d1, id.var= c("id","timestamp","MAC", "Time", "TimeSec", "TimeMin"), measure.var=c("temperature","humidity","pir","pressure","light"))
       p2 <- ggplot(d2, aes(x = timestamp, y=value, color=MAC)) + geom_line() + facet_grid(variable~., scales="free")
-      ##      p2 <- p2 + theme_bw()
-            p2 <- p2 + theme(panel.background = element_blank())
-      ##      p2 <- p2 + theme(panel.background = element_rect(fill="transparent"))
-      ## ggplotly(p2, height = 800)
-      p2
+      ## p2 <- p2 + theme_bw()
+      ## p2 <- p2 + theme(panel.background = element_blank())
+      p2 <- p2 + theme(panel.background = element_rect(fill="transparent"))
+      ggplotly(p2, height = 800)
       
       ## subplot(
       ##     plot_ly(subset(d1, senid == input$sensor_selected[1] , x="timestamp", y="")
