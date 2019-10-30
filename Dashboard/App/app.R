@@ -23,7 +23,7 @@ library(reshape2)
 ## Local funcs
 source("lib.R")
 
-flog.threshold(TRACE)
+## flog.threshold(TRACE)
 
 if(!file.exists("config.yml")) {
     stop("Needs config file to find database")
@@ -87,10 +87,13 @@ ui <- fluidPage(
                        )
             , tabPanel("Enviroment"
                      , uiOutput("select_sens")
-                     , plotlyOutput("envi")
+                     ##, plotlyOutput("envi")
                        ##                     , dataTableOutput("envi_table")
                        , plotlyOutput("envi_temp")
                        , plotlyOutput("envi_hum")
+                       , plotlyOutput("envi_pressure")
+                       , plotlyOutput("envi_light")
+                       , plotlyOutput("envi_pir")
                        )
              ## , tabPanel("Current",
              ##           dashboardBody (
@@ -185,6 +188,34 @@ server <- function(input, output) {
       if(length(input$sensor_selected) >0)
           d1 <- subset(d1, MAC %in% input$sensor_selected)
       p1 <- plot.envi_part(d1, Part = "humidity")
+      ggplotly(p1)
+    })
+
+    output$envi_pressure <- renderPlotly({
+      req(input$date)
+      d1 <- EnviDat()
+      if(length(input$sensor_selected) >0)
+          d1 <- subset(d1, MAC %in% input$sensor_selected)
+      p1 <- plot.envi_part(d1, Part = "pressure")
+      ggplotly(p1)
+    })
+
+    output$envi_light <- renderPlotly({
+      req(input$date)
+      d1 <- EnviDat()
+      if(length(input$sensor_selected) >0)
+          d1 <- subset(d1, MAC %in% input$sensor_selected)
+      p1 <- plot.envi_part(d1, Part = "light")
+      ggplotly(p1)
+    })
+
+    output$envi_pir <- renderPlotly({
+      req(input$date)
+      d1 <- EnviDat()
+      if(length(input$sensor_selected) >0)
+          d1 <- subset(d1, MAC %in% input$sensor_selected)
+      d2 <-  transform(d1, PIR = ifelse(pir, as.numeric(as.factor(MAC)),as.numeric(as.factor(MAC))-.5))
+      p1 <- plot.envi_part(d2, Part = "PIR")
       ggplotly(p1)
     })
 
