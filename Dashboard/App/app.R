@@ -117,7 +117,7 @@ server <- function(input, output) {
     })
   
     output$select_sens <- renderUI({
-        Sensors <- unique(EnviDat()$senid)
+        Sensors <- unique(EnviDat()$MAC)
         checkboxGroupInput("sensor_selected", "Select sensor", choices=Sensors, selected=Sensors, inline=TRUE)
     })
 
@@ -171,10 +171,15 @@ server <- function(input, output) {
       req(input$date)
       d1 <- EnviDat()
       if(length(input$sensor_selected) >0)
-          d1 <- subset(d1, senid %in% input$sensor_selected)
-      d2 <- reshape2::melt(d1, id.var= c("id","timestamp","senid", "Time", "TimeSec", "TimeMin"), measure.var=c("temp","humi","pir","press","light"))
-      p2 <- ggplot(d2, aes(x = timestamp, y=value, color=senid)) + geom_line() + facet_grid(variable~., scales="free")
+          d1 <- subset(d1, MAC %in% input$sensor_selected)
+      d2 <- reshape2::melt(d1, id.var= c("id","timestamp","MAC", "Time", "TimeSec", "TimeMin"), measure.var=c("temperature","humidity","pir","pressure","light"))
+      p2 <- ggplot(d2, aes(x = timestamp, y=value, color=MAC)) + geom_line() + facet_grid(variable~., scales="free")
+      p2 <- p2 + theme_bw()
       ggplotly(p2, height = 800)
+      
+      ## subplot(
+      ##     plot_ly(subset(d1, senid == input$sensor_selected[1] , x="timestamp", y="")
+      ##     )
     })
 
     output$hum_temp_cor <- renderPlotly({
