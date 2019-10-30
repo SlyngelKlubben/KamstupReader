@@ -178,7 +178,8 @@ server <- function(input, output) {
       ##      p2 <- p2 + theme_bw()
             p2 <- p2 + theme(panel.background = element_blank())
       ##      p2 <- p2 + theme(panel.background = element_rect(fill="transparent"))
-      ggplotly(p2, height = 800)
+      ## ggplotly(p2, height = 800)
+      p2
       
       ## subplot(
       ##     plot_ly(subset(d1, senid == input$sensor_selected[1] , x="timestamp", y="")
