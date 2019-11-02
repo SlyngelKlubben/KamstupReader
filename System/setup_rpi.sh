@@ -1,12 +1,25 @@
+## Download minimal install from https://www.raspberrypi.org/downloads/raspbian/
+## dd it to sd card, as described here: https://www.raspberrypi.org/documentation/installation/installing-images/linux.md
+
+## run: sudo bash setup_rpi.sh
+
+## Source config
+test ! -f config.sh && echo "Please add file: \"config.sh\" with the following content:
+SSID=\"my wifi SSID\"    ## Replace with your wifi SSID
+PSK=\"my wifi password\" ## Replace with your wifi password
+IP=\"192.168.1.4\"       ## the IP I want my Raspberry to have on my local network
+ROUTER=\"192.168.1.1\"   ## The IP of my router
+" && exit 
+
+. config.sh 
+
+echo "Will setup pi on $IP connecting to $SSID with pw $PSK"
+
+exit
+
 SD="/media/tp"
 ROOTFS="${SD}/rootfs"
 BOOT="$SD/boot"
-SSID="TelenorC04AFB"
-PSK="CEA530B3C2"
-IP="10.0.0.235"
-ROUTER="10.0.0.1"
-
-## run: sudo bash setup_rpi.sh
 
 ## Check SD card
 test ! -d $SD && echo "$SD does not exist" && exit
