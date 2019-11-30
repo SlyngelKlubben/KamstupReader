@@ -51,6 +51,20 @@ dev.last <- function(device='Kamstrup', table=Conf$db$eltable,limit=10, con=.pg)
     dev.trans(res)
 }
 
+get.sensors.all <- function(con = .pg) {
+    ## Get sensor names and locations at TimePoint
+    stmt <- "select id, mac, name, location, start_date, ST_AsText(location) as location_txt from sensor_location  order by id desc"
+    res <- pg.get(q=stmt, con=con)
+    res
+}
+get.sensors.current <- function(TimePoint=Sys.time(), con = .pg) {
+    ## Get sensor names and locations at TimePoint
+    stmt <- sprintf("select distinct on (mac) id, mac, name, location, start_date, ST_AsText(location) as location_txt from sensor_location order by mac, start_date desc", TimePoint)
+    stmt <- sprintf("select distinct on (mac) id, mac, name, location, start_date, ST_AsText(location) as location_txt from sensor_location where start_date <= '%s' order by mac, start_date desc", TimePoint)
+    res <- pg.get(q=stmt, con=con)
+    res
+}
+
 dev.trans <- function(dat, tz.in="Europe/Copenhagen", tz.out="Europe/Copenhagen") {
     ## todo: get tz from conf
     library(lubridate)
@@ -61,7 +75,8 @@ dev.trans <- function(dat, tz.in="Europe/Copenhagen", tz.out="Europe/Copenhagen"
     res <- transform(dat,
                      Source=sub(Pat,'\\1',as.character(content)),
                      Value=as.numeric(sub(Pat,'\\2',as.character(content))),
-                     Time=with_tz(ymd_hms(timestamp), tzone=tz.in))
+                     ## Time=with_tz(ymd_hms(timestamp), tzone=tz.in))
+                     Time=ymd_hms(timestamp))
     ## transform(plyr::arrange(res, id), TimeDiffSec=c(NA, diff(Time)), TimeDiff=c(NA,diff(timestamp)))
     res <- transform(res, TimeSec = as.numeric(Time))
     res <- transform(res, TimeMin = floor(TimeSec/60))
@@ -78,7 +93,10 @@ kamstrup.power <- function(dat) {
     library(dplyr)
     dat <- dat %>% group_by(Time) %>% filter(row_number() == 1)
     dat <- transform(subset(dat, Source=="Kamstrup" & Value > 1), TimeDiffSec=c(NA, diff(Time)), TimeDiff=c(NA,diff(timestamp)))
-    transform(dat, PowerW=60*60/TimeDiffSec, kWh = cumsum(Value > 1)/1000) ## not more than one per second
+    dat <- transform(dat, PowerW=60*60/TimeDiffSec, kWh = cumsum(Value > 1)/1000) ## not more than one per second
+    if( "power_w" %in%names(dat))
+        dat <- transform(dat, power_w = as.numeric(as.character(power_w)))
+    dat
 }
 
 kamstrup.power.rate <- function(dat) {
@@ -133,6 +151,7 @@ dat.water <- function(dat) {
     vand
 }
 
+    
 water.rate <- function(vand) {
     ## Vand
     library(futile.logger)

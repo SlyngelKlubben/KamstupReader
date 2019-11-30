@@ -81,7 +81,7 @@ ui <- fluidPage(
                      , dataTableOutput("water_table")  
                        )
              ,tabPanel("Power",
-                       plotlyOutput("power")
+                       plotlyOutput("powerPlot") ## power
                      , plotlyOutput("kWh")
                      , dataTableOutput("power_table")  
                        )
@@ -94,6 +94,10 @@ ui <- fluidPage(
                        , plotlyOutput("envi_pressure")
                        , plotlyOutput("envi_light")
                        , plotlyOutput("envi_pir")
+                       )
+            , tabPanel("Wifi Signal"
+                     , plotlyOutput("wifi_graph")
+                     , dataTableOutput("wifi_table")  
                        )
              ## , tabPanel("Current",
              ##           dashboardBody (
@@ -142,6 +146,11 @@ server <- function(input, output) {
       dat.day(date=input$date, table=Conf$db$envitable) 
     })
 
+    SensorNames <- reactive({
+        
+    })
+
+
     Water <- reactive({
         req(VandDat())
         dat.water(VandDat())
@@ -161,9 +170,12 @@ server <- function(input, output) {
         kamstrup.power(subset(ElDat(), Source=="Kamstrup" & Value > 1))
     })
 
-    PowerNow <- eventReactive(input$update, {
-      dev.last(device="Kamstrup", limit=5) %>% kamstrup.power()
-    })
+
+    ## PowerNow <- eventReactive(input$update, {
+    ##   dev.last(device="Kamstrup", limit=5) %>% kamstrup.power()
+    ## })
+
+    
     
     output$temp_hum_plot <- renderPlotly({
       req(input$date)
@@ -277,6 +289,14 @@ server <- function(input, output) {
         p1 <- ggplot(dat=Power(), aes(x = Time, y=PowerW)) +  geom_step() + ggtitle(sprintf("Power consumption %s", input$date))
       ggplotly(p1)
     })
+    output$powerPlot <- renderPlotly({
+        req(input$date)
+        p1 <- ggplot(dat=Power(), aes(x = Time, y=power_w)) +  geom_line() + ggtitle(sprintf("Power consumption %s", input$date))
+      ggplotly(p1)
+    })
+
+
+
     output$kWh <- renderPlotly({
         req(input$date)
         p1 <- ggplot(dat=Power(), aes(x = Time, y=kWh)) +  geom_line() + ggtitle(sprintf("Energy consumption %s", input$date))
@@ -292,15 +312,15 @@ server <- function(input, output) {
       , content = function(file) write.xlsx(x=Power(), file)
     )
 
-    output$PowerNow <- renderValueBox({
-      req(input$update)
-      dat1 <- tail(PowerNow(),1)
-      with(dat1,flog.trace("Kamstrup: Used: %sW at %s",PowerW, Time))
-      valueBox(
-        sprintf("%.0fW",dat1$PowerW), sprintf("Power. %s",dat1$Time),
-        color="orange"
-      )
-    })
+    ## output$PowerNow <- renderValueBox({
+    ##   req(input$update)
+    ##   dat1 <- tail(PowerNow(),1)
+    ##   with(dat1,flog.trace("Kamstrup: Used: %sW at %s",PowerW, Time))
+    ##   valueBox(
+    ##     sprintf("%.0fW",dat1$PowerW), sprintf("Power. %s",dat1$Time),
+    ##     color="orange"
+    ##   )
+    ## })
     
     output$TempNow <- renderValueBox({
       req(input$update)
