@@ -3,7 +3,7 @@ default = false
 
 [pg]
 host = "127.0.0.1"
-user = "jacob"
-pass = "jacob"
+user = "iot"
+pass = "iot"
 port = 5432
 database = "hus"
