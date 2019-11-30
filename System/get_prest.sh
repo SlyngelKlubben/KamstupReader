@@ -13,6 +13,8 @@ else
     sudo mkdir /opt/Prest
     sudo cp prest-linux-arm-7 /opt/Prest
     sudo cp prest.toml /opt/Prest/
+    ## Set permissions
+    sudo chmod +x /opt/Prest/prest-linux-arm-7
 fi
 
 ## Check if rc.local starts Prest
