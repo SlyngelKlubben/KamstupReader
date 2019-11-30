@@ -5,7 +5,7 @@ DB="hus"
 
 P1=$1 ## DROP will drop existing database
 
-PGVER="9.6"
+PGVER="10"
 
 ## Check we are running as root
 if (( $EUID != 0 )); then
