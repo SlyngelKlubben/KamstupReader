@@ -9,7 +9,7 @@
 
 #include "parameters.h"
 
-const char* softwareVersion = "20190903"; // Update This!!
+const char* softwareVersion = "20191130"; // Update This!!
 const char* db = "el";
 
 // String variables
@@ -101,7 +101,7 @@ void kamstrup_values(char* s) {
    */
    // One signal each Whour = 3600W*s = 3600*1000W*ms
    Power_W = 3.6e6 / delta_ms;
-  sprintf(s, "\"content\":\"Kamstrup: %d\", \"power_w\":%.2f, \"intensity\":%d, \"threshold\":%d",iVal, Power_W, iVal, ThresholdLower);
+  sprintf(s, "\"content\":\"Kamstrup: %d\", \"power_w\":%.2f, \"intensity\":%d, \"t_low\":%d, \"t_high\":%d",iVal, Power_W, iVal, ThresholdLower, ThresholdUpper);
 }
 
 void call_db() {
