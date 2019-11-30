@@ -12,6 +12,7 @@ else
     ## Copy to system location
     sudo mkdir /opt/Prest
     sudo cp prest-linux-arm-7 /opt/Prest
+    sudo cp prest.toml /opt/Prest/
 fi
 
 ## Check if rc.local starts Prest
