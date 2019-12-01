@@ -18,6 +18,7 @@ PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN \"MAC\" tex
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN time_ms bigint;"
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN delta_ms bigint;"
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE el ADD COLUMN timer_periods int;"
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "CREATE INDEX ON el (timestamp);"
 
 
 ## INSERT INTO "hus"."public"."el"("IP", "MAC", "time_ms", "delta_ms", "threshold", "signal", "intensity", "senid", "timer_periods", "software_version", "content", "power_w") VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING row_to_json("el")
@@ -38,6 +39,7 @@ PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN \"MAC\" t
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN time_ms bigint;"
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN delta_ms bigint;"
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE vand ADD COLUMN timer_periods int;"
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "CREATE INDEX ON vand (timestamp);"
 
 ## Envi
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE envi ADD COLUMN software_version text;"
@@ -52,3 +54,4 @@ PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE envi ADD COLUMN humidity 
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE envi ADD COLUMN pir integer;"
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE envi ADD COLUMN pressure double precision;"
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "ALTER TABLE envi ADD COLUMN light double precision;"
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "CREATE INDEX ON envi (timestamp);"
