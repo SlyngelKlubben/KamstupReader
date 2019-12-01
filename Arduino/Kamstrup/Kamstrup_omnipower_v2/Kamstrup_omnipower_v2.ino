@@ -9,7 +9,7 @@
 
 #include "parameters.h"
 
-const char* softwareVersion = "20191130"; // Update This!!
+const char* softwareVersion = "20191201"; // Update This!!
 const char* db = "el";
 
 // String variables
@@ -133,6 +133,7 @@ void call_db() {
       }
     } else {
         Serial.printf("POST failed, error: %s\n", http.errorToString(httpCode).c_str());
+        reset_values() ; // Reset all values if database is not available
     }
     http.end();
   } else {
@@ -186,5 +187,18 @@ void wifi_connect() {
   Serial.println(WiFi.RSSI()) ;
   Serial.println("");
 
+}
+
+void reset_values() {
+  /*
+   * Reset all variables if database is not available
+   */
+  iVal = 0;
+  SensorMaxValue=0;
+  SensorMinValue=255;
+  ThresholdUpper = SensorMaxValue-(SensorMaxValue-SensorMinValue)/3; 
+  ThresholdLower = SensorMinValue+(SensorMaxValue-SensorMinValue)/3;      
+  CycleCount = 1;
+  iState = 1;
 }
 

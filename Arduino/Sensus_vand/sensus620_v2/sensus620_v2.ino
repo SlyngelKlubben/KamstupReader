@@ -9,7 +9,7 @@
 
 #include "parameters.h"
 
-const char* softwareVersion = "20190916"; // Update This!!
+const char* softwareVersion = "20191201"; // Update This!!
 const char* db = "vand";
 
 // String variables
@@ -97,12 +97,11 @@ void loop() {
     t3 = millis();
   }
 
-  t2 = millis()
-  if((t2 - t3) > leak_update_ms & (t2 - t1) >= 2*leak_update_ms) { // leak test every 5 minutes     
-     
-    last_leak_cycle_count = CycleCount;
-    t3 = millis();
-  }
+  t2 = millis() ;
+//  if((t2 - t3) > leak_update_ms & (t2 - t1) >= 2*leak_update_ms) { // leak test every 5 minutes     
+//   last_leak_cycle_count = CycleCount;
+//    t3 = millis();
+//  }
   delay(10);
 }
 
@@ -145,6 +144,7 @@ void call_db() {
       }
     } else {
         Serial.printf("POST failed, error: %s\n", http.errorToString(httpCode).c_str());
+        reset_values() ; // Reset all values if database is not available
     }
     http.end();
   } else {
@@ -198,5 +198,18 @@ void wifi_connect() {
   Serial.println(WiFi.RSSI()) ;
   Serial.println("");
 
+}
+
+void reset_values() {
+  /*
+   * Reset all variables if database is not available
+   */
+  iVal = 0;
+  SensorMaxValue=0;
+  SensorMinValue=255;
+  ThresholdUpper = SensorMaxValue-(SensorMaxValue-SensorMinValue)/3; 
+  ThresholdLower = SensorMinValue+(SensorMaxValue-SensorMinValue)/3;      
+  CycleCount = 1;
+  iState = 1;
 }
 
