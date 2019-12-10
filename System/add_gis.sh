@@ -6,14 +6,14 @@ DB="hus"
 
 
 # ## Update packages
-# sudo apt update
-# sudo apt upgrade
+sudo apt update
+sudo apt upgrade
 
 # ## install postgis
-# sudo apt install postgis
+sudo apt install postgis
 
 # ## restart postgres
-# sudo service postgresql restart
+sudo service postgresql restart
 
 ## Enable postgis
 #### sudo su - postgres
