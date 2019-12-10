@@ -28,5 +28,5 @@ location GEOMETRY(POINTZ,25832), -- not null?
 start_date TIMESTAMPTZ  DEFAULT NOW() 
 ) ;
 ALTER TABLE public.sensor_location OWNER to $DBUSER;
-GRANT ALL on TABLE public.${TBL} to $DBUSER;" 
+GRANT ALL on TABLE public.sensor_location to $DBUSER;" 
 
