@@ -15,7 +15,7 @@ ROUTER=\"192.168.1.1\"   ## The IP of my router
 
 echo "Will setup pi on $IP connecting to $SSID with pw $PSK"
 
-exit
+## exit
 
 SD="/media/tp"
 ROOTFS="${SD}/rootfs"
