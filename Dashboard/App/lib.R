@@ -80,7 +80,12 @@ dev.trans <- function(dat, tz.in="Europe/Copenhagen", tz.out="Europe/Copenhagen"
     ## transform(plyr::arrange(res, id), TimeDiffSec=c(NA, diff(Time)), TimeDiff=c(NA,diff(timestamp)))
     res <- transform(res, TimeSec = as.numeric(Time))
     res <- transform(res, TimeMin = floor(TimeSec/60))
-    plyr::arrange(res, id)
+    res <- transform(res, MAC = ifelse(is.na(MAC), as.character(senid), as.character(MAC)))
+    # , 
+    #                  temperature = ifelse(is.na(temperature), temp, temperature),
+    #                  humidity = ifelse(is.na(humidity), humi, humidity),
+    #                  pressure = ifelse(is.an(pressure), press, pressure))
+    # plyr::arrange(res, id)
 }
 
 kamstrup.power <- function(dat) {
@@ -143,7 +148,12 @@ dev.last.hour <- function(con=.pg, hour=1, table=Conf$db$vandtable, device="Sens
 dat.water <- function(dat) {
     library(futile.logger)
     flog.trace("dev.water")
-    vand <- subset(dat, Source =="Sensus620") %>% 
+    # v1 <- subset(dat, Source =="Sensus620")
+    # v2 <- sensus620.flow(v1)
+    # v3 <- transform(v2, Total_Liter = cumsum(Value)/90, TimeSec = as.numeric(Time))
+    # v4 <- transform(v3, TimeMin = floor(TimeSec/60))
+    # vand <- v4
+    vand <- subset(dat, Source =="Sensus620") %>%
         sensus620.flow() %>%
         mutate(Total_Liter = cumsum(Value)/90, TimeSec = as.numeric(Time)) %>%
         mutate(TimeMin = floor(TimeSec/60))
@@ -156,7 +166,7 @@ water.rate <- function(vand) {
     ## Vand
     library(futile.logger)
     flog.trace("water.rate")
-    vandRate <- vand %>% group_by(TimeMin) %>%  mutate( L_per_min = sum(Value)/90) %>% filter(row_number()==1)
+    vandRate <- vand %>% group_by(TimeMin) %>%  mutate( L_per_min = sum(Value)/90) %>% filter(row_number()==1) %>% ungroup()
     vandRate
 }
 
