@@ -167,6 +167,18 @@ Method: "Shared to other computers"
 find it with nmap
 eg sudo nmap -n -sP 10.42.0.0/24
 (10.42.0.1 is ip of laptop ethernet)
+** Locales
+*** Generating locales:
+    1. Edit the file /etc/locale.gen and add your locale settings (one set per line), e.g.: de_DE.UTF-8 UTF-8 de_DE ISO-8859-1 de_DE@euro ISO-8859-15. ...
+    2. Run the command locale-gen.
+    3. Run the command locale -a to verify the list of available locales; note that the spellings change.
+pi@pi3:~ $ grep -v '^#' /etc/locale.gen
+en_GB.UTF-8 UTF-8
+pi@pi3:~ $ grep -v '^#' /etc/locale.gen
+da_DK.UTF-8 UTF-8
+en_DK.UTF-8 UTF-8
+en_GB.UTF-8 UTF-8
+
 * Package installation
 ** Postgres server
    sudo apt install postgresql-9.6  
@@ -439,6 +451,11 @@ https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#run
 
 Installing stuff in a running docker: https://ropenscilabs.github.io/r-docker-tutorial/03-install-packages.html
 
+** Docker caching issues
+- [2019-07-26 Fri] install of r packages did not work becuse the 
+  apt update && apt upgrade line was not run (cached)
+  Rebuild with no cache:
+  pi@pi3:~/KamstupReader/Dashboard/App $ docker build --no-cache -t app .
 * deb package
 ** Backport r-cran-later from deb 10 (buster)
 See https://wiki.debian.org/SimpleBackportCreation
@@ -582,10 +599,14 @@ System/setup_pi.sh
 cd System
 sudo bash setup_db.sh
 * Backup to remote machine:
+## On raspberry: (pc is 10.0.0.37)
 sudo su - postgres
 pg_dump -d hus  -Fc | ssh tp@10.0.0.37 'cat > hus_2019-05-26.pgdump'
 ## restoring
 pg_restore -d hus -c hus_2019-05-26.pgdump
+** [2019-08-22 Thu]
+bash probe.sh 192.168.1.3 el > dump_el_2019-08-22.csv
+## out of memory :-(
 * Convert to new schema
 [2019-05-25 lør]
 ** One table per device type
@@ -594,13 +615,104 @@ pg_restore -d hus -c hus_2019-05-26.pgdump
 - content
 ** Postgres
 ref https://stackoverflow.com/questions/31284514/how-do-i-copy-data-from-one-table-to-another-in-postgres-using-copy-command
-## Create the new tables
-INSERT INTO el
+*** Create the new tables
+INSERT INTO public.el
 SELECT * FROM tyv where content like 'Kamstrup%';
 
-INSERT INTO vand
+INSERT INTO public.vand
 SELECT * FROM tyv where content like 'Sensus620%';
 
-INSERT INTO vand
+INSERT INTO public.vand
 SELECT * FROM tyv where content like 'WaterLeakTest%';
 
+*** advance sequences. 
+ref https://www.postgresql.org/docs/10/sql-altersequence.html
+hus=# select * from public.el order by id desc limit 2;
+   id    |           timestamp           |    content    | senid 
+---------+-------------------------------+---------------+-------
+ 3295136 | 2019-07-20 09:47:54.806132+02 | Kamstrup: 121 | 
+ 3295131 | 2019-07-20 09:47:50.041219+02 | Kamstrup: 147 | 
+
+ALTER SEQUENCE el_id_seq RESTART WITH 3295137;
+
+## Test
+INSERT INTO public.el VALUES (DEFAULT,DEFAULT,'test',NULL);
+
+hus=#  select * from public.el order by id desc limit 2;
+   id    |           timestamp           |    content    | senid 
+---------+-------------------------------+---------------+-------
+ 3295137 | 2019-07-20 17:49:48.52316+02  | test          | 
+ 3295136 | 2019-07-20 09:47:54.806132+02 | Kamstrup: 121 | 
+hus=# delete from public.el where id = 3295137;
+
+hus=#  select * from public.vand order by id desc limit 2;
+   id    |           timestamp           |   content    | senid 
+---------+-------------------------------+--------------+-------
+ 3295141 | 2019-07-20 09:48:01.148818+02 | Sensus620: 9 | 
+ 3295140 | 2019-07-20 09:47:59.264089+02 | Sensus620: 9 | 
+
+ALTER SEQUENCE vand_id_seq RESTART WITH 3295142;
+
+## Test
+hus=# INSERT INTO public.vand VALUES (DEFAULT,DEFAULT,'test',NULL);
+INSERT 0 1
+hus=#  select * from public.vand order by id desc limit 2;
+   id    |           timestamp           |   content    | senid 
+---------+-------------------------------+--------------+-------
+ 3295142 | 2019-07-20 17:52:02.651976+02 | test         | 
+ 3295141 | 2019-07-20 09:48:01.148818+02 | Sensus620: 9 | 
+(2 rows)
+
+hus=# delete from public.vand where id = 3295142;
+DELETE 1
+
+** update prest
+[pg]
+host = "127.0.0.1"
+user = "iot"
+pass = "iot"
+port = 5432
+database = "hus"
+
+And restart!
+
+** update arduinos
+in parameters.h:
+const char* dbstring = "http://192.168.1.3:3000/hus/public/el";
+
+{ "content":"test", "senid":"mac"}
+
+** TODO Add diagnostics
+Signal strength is called RSSI, and is returned by 
+WiFi.RSSI()
+See https://github.com/esp8266/Arduino/blob/d108a6ec30193a8e44eb9c72efc7a55853b54f09/hardware/esp8266com/esp8266/libraries/ESP8266WiFi/src/ESP8266WiFi.h#L196
+From here: https://github.com/esp8266/Arduino/issues/132
+// Way to go:  from https://forum.arduino.cc/index.php?topic=228884.msg3102705#msg3102705
+char Json[100];
+sprintf(Json, "{\"signal\":%d, \"IP\":%s}", Signal, WiFi.localIP().toString().c_str()); // https://forum.arduino.cc/index.php?topic=228884.msg3102705#msg3102705
+** TODO Move waterleak to separate schema
+
+* Add thresholds and intensities
+** arduino
+Kamstrup:
+        if ( iVal > SensorMaxValue) {SensorMaxValue=iVal; USE_SERIAL.printf("SensorMaxValue set to %d\n", SensorMaxValue);}
+        if ( iVal < SensorMinValue) {SensorMinValue=iVal; USE_SERIAL.printf("SensorMinValue set to %d\n", SensorMinValue);}
+
+        ThresholdUpper = SensorMaxValue-(SensorMaxValue-SensorMinValue)/3; 
+        ThresholdLower = SensorMinValue+(SensorMaxValue-SensorMinValue)/3;      
+
+** database
+hus=> alter table public.el add threshold integer;
+hus=> alter table public.el add intensity integer;
+
+hus=> alter table public.vand add threshold_upper integer;
+ALTER TABLE
+hus=> alter table public.vand add threshold_lower integer;
+ALTER TABLE
+hus=> 
+hus=> alter table public.vand add intensity integer;
+* Remember github password
+> git config credential.helper cache
+or 
+> git config --global credential.helper cache
+See https://help.github.com/en/github/using-git/caching-your-github-password-in-git
