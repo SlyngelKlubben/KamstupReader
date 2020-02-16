@@ -18,8 +18,9 @@ sudo apt install git
 curl -fsSL get.docker.com -o get-docker.sh 
 sudo bash get-docker.sh
 ## add to group
+sudo usermod -aG docker $USER  
 sudo gpasswd -a $USER docker
-sudo newgrp docker 
+sudo -c newgrp docker 
 sudo newgrp pi
 ## Test:
 docker run hello-world
