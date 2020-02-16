@@ -291,7 +291,7 @@ server <- function(input, output) {
     })
     output$powerPlot <- renderPlotly({
         req(input$date)
-        p1 <- ggplot(dat=Power(), aes(x = Time, y=power_w)) +  geom_line() + ggtitle(sprintf("Power consumption %s", input$date))
+        p1 <- ggplot(dat=Power(), aes(x = Time, y=pmin(power_w,10000))) +  geom_line() + ggtitle(sprintf("Power consumption %s", input$date))
       ggplotly(p1)
     })
 
