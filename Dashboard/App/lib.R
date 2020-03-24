@@ -27,11 +27,13 @@ pg.get <- function(q, con=.pg) {
     dbGetQuery(conn=con, statement=stmt)  
 }
 
-dat.day <- function(date, table=Conf$db$vandtable, con=.pg){
+dat.day <- function(date, days = 1, table=Conf$db$vandtable, con=.pg){
     ## Get data from date
     library(futile.logger)
     flog.trace("dat.day")
-    stmt <- sprintf("SELECT * FROM %s where timestamp >= '%s' AND timestamp < '%s' ORDER BY id DESC", table, as.Date(date), as.Date(date)+1)
+    days <- as.numeric(days)
+    if(is.na(days)) days <- 1
+    stmt <- sprintf("SELECT * FROM %s where timestamp >= '%s' AND timestamp <= '%s' ORDER BY timestamp, id  DESC", table, as.Date(date) - days, as.Date(date)) ## by id
     res <- pg.get(q=stmt, con=con)
     if(nrow(res) == 0)
         return(NULL)
@@ -190,3 +192,8 @@ plot.envi_part <- function(dat, Part = "temperature") {
     ggplot(dat, aes_string(x="timestamp", y=Part, color = "MAC")) + geom_line()
 }
 
+plot.wifi <- function(dat) {
+    DateRange <- range(as.Date(dat$Time))
+    DateRangeStr <- sprintf("%s - %s", DateRange[1], DateRange[2])        
+    ggplot(dat, aes(x = Time, y = signal, color = paste(`Source`,MAC))) + geom_line() + ggtitle(sprintf("Wifi signal %s",DateRangeStr))
+}

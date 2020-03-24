@@ -59,6 +59,7 @@ ui <- fluidPage(
    sidebarLayout(
       sidebarPanel(width = 2,
                    uiOutput("datepicker")
+                   , selectInput("day_range", "Days to show", choices=c(1:10), selected = 1)
          # dateInput("date",
          #           "Select Day",
          #           min = Day1,
@@ -133,17 +134,26 @@ server <- function(input, output) {
 
     VandDat <- reactive({
         req(input$date)
-        dat.day(date=input$date, table=Conf$db$vandtable) 
+        req(as.numeric(input$day_range))
+        dat.day(date=input$date, days = input$day_range, table=Conf$db$vandtable) 
     })
     
     ElDat <- reactive({
       req(input$date)
-      dat.day(date=input$date, table=Conf$db$eltable) 
+      dat.day(date=input$date, days =input$day_range, table=Conf$db$eltable) 
     })
     
     EnviDat <- reactive({
       req(input$date)
-      dat.day(date=input$date, table=Conf$db$envitable) 
+      dat.day(date=input$date, days =input$day_range, table=Conf$db$envitable) 
+    })
+
+    Wifi <- reactive({
+        Pdat <- ElDat()
+        Wdat <- VandDat()
+        Edat <- EnviDat()
+        Dat <- plyr::rbind.fill(Pdat, Wdat, Edat)
+        plyr::arrange(Dat, plyr::desc(Time), plyr::desc(id)) 
     })
 
     SensorNames <- reactive({
@@ -171,6 +181,7 @@ server <- function(input, output) {
     })
 
 
+    
     ## PowerNow <- eventReactive(input$update, {
     ##   dev.last(device="Kamstrup", limit=5) %>% kamstrup.power()
     ## })
@@ -235,6 +246,8 @@ server <- function(input, output) {
     output$envi <- renderPlotly({
       req(input$date)
       d1 <- EnviDat()
+      DateRange <- range(as.Date(d1$Time))
+      DateRangeStr <- sprintf("%s - %s", DateRange[1], DateRange[2])        
       if(length(input$sensor_selected) >0)
           d1 <- subset(d1, MAC %in% input$sensor_selected)
       d2 <- reshape2::melt(d1, id.var= c("id","timestamp","MAC", "Time", "TimeSec", "TimeMin"), measure.var=c("temperature","humidity","pir","pressure","light"))
@@ -250,10 +263,12 @@ server <- function(input, output) {
     })
 
     
-    
     output$hum_temp_cor <- renderPlotly({
-      req(input$date) 
-      p1 <- ggplot(EnviDat(), aes(x = temp, y=humi, color = Time)) + geom_point() + ggtitle(sprintf("Humidity vs Temperature, %s", input$date))
+        req(input$date)
+      Dat <- EnviDat()
+      DateRange <- range(as.Date(Dat$Time))
+      DateRangeStr <- sprintf("%s - %s", DateRange[1], DateRange[2])        
+      p1 <- ggplot(Dat, aes(x = temp, y=humi, color = Time)) + geom_point() + ggtitle(sprintf("Humidity vs Temperature, %s", DateRangeStr))
       ggplotly(p1)
     })
     
@@ -264,14 +279,20 @@ server <- function(input, output) {
     
     output$water_rate <- renderPlotly({
       req(input$date) 
-      p1 <- ggplot(data=WaterRate(), aes(x=Time, y=L_per_min)) + geom_point()+ geom_step() + ggtitle(sprintf("Water Flow %s", input$date))
+      Dat <- WaterRate()
+      DateRange <- range(as.Date(Dat$Time))
+      DateRangeStr <- sprintf("%s - %s", DateRange[1], DateRange[2])
+      p1 <- ggplot(data=Dat, aes(x=Time, y=L_per_min)) + geom_point()+ geom_step() + ggtitle(sprintf("Water Flow %s", DateRangeStr))
       ggplotly(p1)
       })
     
     output$water_total <- renderPlotly({
-      req(input$date) 
-      p1 <- ggplot(transform(Water(), Liter = Total_Liter - Total_Liter[1]), aes(x=Time, y=Liter)) + 
-        geom_step() + ggtitle(sprintf("Water Consumed %s", input$date))
+        req(input$date)
+        Dat <- transform(Water(), Liter = Total_Liter - Total_Liter[1])
+        DateRange <- range(as.Date(Dat$Time))
+        DateRangeStr <- sprintf("%s - %s", DateRange[1], DateRange[2])
+      p1 <- ggplot(Dat, aes(x=Time, y=Liter)) + 
+        geom_step() + ggtitle(sprintf("Water Consumed %s", DateRangeStr)) ## input$date
       ggplotly(p1)
     })
     output$water_table <- renderDataTable({
@@ -286,15 +307,20 @@ server <- function(input, output) {
     
     output$power <- renderPlotly({
         req(input$date)
-        p1 <- ggplot(dat=Power(), aes(x = Time, y=PowerW)) +  geom_step() + ggtitle(sprintf("Power consumption %s", input$date))
+        Dat <- Power()
+        DateRange <- range(as.Date(Dat$Time))
+        DateRangeStr <- sprintf("%s - %s", DateRange[1], DateRange[2])
+        p1 <- ggplot(dat=Dat, aes(x = Time, y=PowerW)) +  geom_step() + ggtitle(sprintf("Power consumption %s",DateRangeStr))
       ggplotly(p1)
     })
     output$powerPlot <- renderPlotly({
         req(input$date)
-        p1 <- ggplot(dat=Power(), aes(x = Time, y=pmin(power_w,10000))) +  geom_line() + ggtitle(sprintf("Power consumption %s", input$date))
+        Dat <- Power()
+        DateRange <- range(as.Date(Dat$Time))
+        DateRangeStr <- sprintf("%s - %s", DateRange[1], DateRange[2])        
+        p1 <- ggplot(dat=Power(), aes(x = Time, y=pmin(power_w,10000))) +  geom_line() + ggtitle(sprintf("Power consumption %s", DateRangeStr))
       ggplotly(p1)
     })
-
 
 
     output$kWh <- renderPlotly({
@@ -329,6 +355,17 @@ server <- function(input, output) {
         sprintf("%.2fc",dat1$temp), sprintf("%s %%",dat1$humi),
         color="orange"
       )
+    })
+
+    output$wifi_graph<- renderPlotly({
+      req(input$date)
+      Dat <- Wifi()
+      plot.wifi(Dat)
+    })
+    output$wifi_table <- renderDataTable({
+      req(input$date)
+      Dat <- Wifi()
+      Dat
     })
     
 }
