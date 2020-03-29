@@ -8,7 +8,7 @@
 #include <Arduino.h>
 
 #include <ESP8266WiFi.h>
-#include <ESP8266WiFiMulti.h>
+// #include <ESP8266WiFiMulti.h>
 
 #include <ESP8266HTTPClient.h>
 
@@ -17,7 +17,7 @@
 
 #define USE_SERIAL Serial
 
-ESP8266WiFiMulti WiFiMulti;
+// ESP8266WiFiMulti WiFiMulti;
 
 String sVal = "";
 int SensorMaxValue=0;
@@ -38,13 +38,23 @@ void setup() {
     USE_SERIAL.println();
     USE_SERIAL.println();
 
-    for(uint8_t t = 4; t > 0; t--) {
-        USE_SERIAL.printf("[SETUP] WAIT %d...\n", t);
-        USE_SERIAL.flush();
-        delay(1000);
-    }
+  delay(10);
+  Serial.println('\n');
+  
+  WiFi.begin(ssid, password);             // Connect to the network
+  Serial.print("Connecting to ");
+  Serial.print(ssid); Serial.println(" ...");
 
-    WiFiMulti.addAP(ssid, password);
+  int i = 0;
+  while (WiFi.status() != WL_CONNECTED) { // Wait for the Wi-Fi to connect
+    delay(1000);
+    Serial.print(++i); Serial.print(' ');
+  }
+
+  Serial.println('\n');
+  Serial.println("Connection established!");  
+  Serial.print("IP address:\t");
+  Serial.println(WiFi.localIP());         // Send the IP address of the ESP8266 to the computer
 
 
 }
@@ -74,7 +84,7 @@ void loop() {
 if (LoopCountInState >= 60000 ) { // 1 loop = 10 ms, 1 hour = 100*60*60 loops , 1 hour = less than 6 ml leak/hour - ready to submit no change to database - if missing = slow leak probability
           // wait for WiFi connection
           digitalWrite(LED_BUILTIN, LOW);   // turn the LED on (LOW is the voltage level)
-          if((WiFiMulti.run() == WL_CONNECTED)) {
+          if((WiFi.status() == WL_CONNECTED)) {
             HTTPClient http;
             USE_SERIAL.print("[HTTP] begin...\n");
             // configure traged server and url
@@ -88,10 +98,12 @@ if (LoopCountInState >= 60000 ) { // 1 loop = 10 ms, 1 hour = 100*60*60 loops , 
             LoopCountInState = 0;
             SensorMinValue=SensorMinValue+1; // To avoid drift over time = increase stability of reading
             SensorMaxValue=SensorMaxValue-1; // To avoid drift over time = increase stability of reading
-            String myIdent = "\"WaterLeakTest: "  ; // + sVal ;
             String myPre = "{\"content\":" ;
+            String myIdent = "\"WaterLeakTest: "  ; // + sVal ;
+            String mySenId = "\",\"senid\":\"";
+            String myMac = String(WiFi.macAddress());
             String myPost = "\"}" ;
-            String myJson = myPre + myIdent + sVal + myPost ;
+            String myJson = myPre + myIdent + sVal + mySenId + myMac + myPost ;
             USE_SERIAL.print(myJson);
             int httpCode = http.POST(myJson);
             // httpCode will be negative on error
@@ -109,9 +121,12 @@ if (LoopCountInState >= 60000 ) { // 1 loop = 10 ms, 1 hour = 100*60*60 loops , 
             }
 
             http.end();
+            } else {
+                USE_SERIAL.printf("No wifi connection\n") ;
+              }
             }
           digitalWrite(LED_BUILTIN, HIGH);   // turn the LED off (HIGH is the voltage level)
-        }
+
 
 
         
@@ -119,7 +134,7 @@ if (LoopCountInState >= 60000 ) { // 1 loop = 10 ms, 1 hour = 100*60*60 loops , 
 
           // wait for WiFi connection
           digitalWrite(LED_BUILTIN, LOW);   // turn the LED on (LOW is the voltage level)
-          if((WiFiMulti.run() == WL_CONNECTED)) {
+          if((WiFi.status() == WL_CONNECTED)) {
             HTTPClient http;
             USE_SERIAL.print("[HTTP] begin...\n");
             // configure traged server and url
@@ -131,10 +146,18 @@ if (LoopCountInState >= 60000 ) { // 1 loop = 10 ms, 1 hour = 100*60*60 loops , 
            // int httpCode = http.POST("{\"content\":\"YES\"}");
             sVal = String(CycleCount);
             CycleCount = 0;
-            String myIdent = "\"Sensus620: "  ; // + sVal ;
             String myPre = "{\"content\":" ;
+            String myIdent = "\"Sensus620: "  ; // + sVal ;
+            String mySenId = "\",\"senid\":\"";
+            String myMac = String(WiFi.macAddress());
+            String myThresholdUp = "\",\"threshold_upper\":\"";
+            String myThresValUp = String(ThresholdUpper);
+            String myThresholdLow = "\",\"threshold_lower\":\"";
+            String myThresValLow = String(ThresholdLower);
+            String myIvalName = "\",\"intensity\":\"";
+            String myIval = String(iVal);            
             String myPost = "\"}" ;
-            String myJson = myPre + myIdent + sVal + myPost ;
+            String myJson = myPre + myIdent + sVal + mySenId + myMac + myThresholdUp + myThresValUp + myThresholdLow + myThresValLow + myIvalName + myIval + myPost ;
             USE_SERIAL.print(myJson);
             int httpCode = http.POST(myJson);
             // httpCode will be negative on error
@@ -152,6 +175,8 @@ if (LoopCountInState >= 60000 ) { // 1 loop = 10 ms, 1 hour = 100*60*60 loops , 
             }
 
             http.end();
+            } else {
+              USE_SERIAL.println("No connection to wifi");
             }
           digitalWrite(LED_BUILTIN, HIGH);   // turn the LED off (HIGH is the voltage level)
         }

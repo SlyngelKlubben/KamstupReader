@@ -35,6 +35,8 @@ int SensorMaxValue=0;
 int SensorMinValue=255;
 int ThresholdUpper = SensorMaxValue-(SensorMaxValue-SensorMinValue)/3; 
 int ThresholdLower = SensorMinValue+(SensorMaxValue-SensorMinValue)/3;      
+int CycleCount = 1;
+int iState = 1;
 
 int Debug = 0; // 0: no debugging
 
@@ -72,14 +74,25 @@ void setup() {
 
 void loop() {
         iVal = analogRead(A0); // read sensor
-        if ( iVal > SensorMaxValue) {SensorMaxValue=iVal; USE_SERIAL.printf("\nSensorMaxValue set to %d. iVal: %d\n", SensorMaxValue, iVal);}
-        if ( iVal < SensorMinValue) {SensorMinValue=iVal; USE_SERIAL.printf("\nSensorMinValue set to %d. iVal: %d\n", SensorMinValue, iVal);}
-
+        if ( iVal > SensorMaxValue) {SensorMaxValue=iVal;}
+        if ( iVal < SensorMinValue) {SensorMinValue=iVal;}
+        
         ThresholdUpper = SensorMaxValue-(SensorMaxValue-SensorMinValue)/3; 
         ThresholdLower = SensorMinValue+(SensorMaxValue-SensorMinValue)/3;      
+        
+        if ( iVal > ThresholdUpper && iState == 0) {   // If High but in Low state
+          CycleCount = CycleCount + 1;
+          iState = 1;                         // Now in High state
+        }
+  
+        if ( iVal < ThresholdLower && iState == 1) {   // If Low but in High state
+        //   CycleCount = CycleCount + 1;   // Not changed - Full cycle only at High state
+          iState = 0;                         // Now in Low state 
+        }
+        
 
-        if( iVal >  ThresholdLower) { // calibrate 100
-            USE_SERIAL.print("HIP\n");
+        if (CycleCount >= 1 ) {               // 90 cycles = 1 liter used = ready to submit to database       
+
           // wait for WiFi connection
           digitalWrite(LED_BUILTIN, LOW);   // turn the LED on (LOW is the voltage level)
           if((WiFi.status() == WL_CONNECTED)) {
@@ -107,6 +120,7 @@ void loop() {
             USE_SERIAL.print("HEP\n");
             SensorMinValue=SensorMinValue+1; // To avoid drift over time = increase stability of reading
             SensorMaxValue=SensorMaxValue-1; // To avoid drift over time = increase stability of reading
+            CycleCount = 0;
             if(1) {
               int httpCode = http.POST(myJson);
               // httpCode will be negative on error
