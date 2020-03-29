@@ -20,6 +20,8 @@ RUN apt install r-base \
     r-cran-lubridate \
     r-cran-yaml \
     r-cran-shinydashboard \
+    r-cran-shinycssloaders \
+    r-cran-shinyBS \
     r-cran-glue \
     r-cran-openxlsx \
     r-cran-lubridate \
