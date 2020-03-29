@@ -1,4 +1,5 @@
-#
+## ace: R-3.5.0
+##
 # This is a Shiny web application. You can run the application by clicking
 # the 'Run App' button above.
 #
@@ -20,8 +21,14 @@ library(openxlsx)
 library(shinydashboard)
 library(reshape2)
 
+library(shinycssloaders) ## spinner
+library(shinyBS) ## tooltip
+
 ## Local funcs
 source("lib.R")
+
+## Shiny Modules
+source("pg_explorer.R")
 
 ## flog.threshold(TRACE)
 
@@ -34,19 +41,10 @@ flog.info("Read config. Using db on %s", Conf$db$profile)
 pg.new(Conf)
 
 ## get Date Range
-DateRange <-  pg.get(q=sprintf("select min(timestamp), max(timestamp) from vand", Conf$db$vandtable))
+DateRange <-  pg.get(q=sprintf("select min(timestamp), max(timestamp) from vand", Conf$db$envitable))
 
 Day1 <- as.Date(DateRange$min)
 Day2 <- as.Date(DateRange$max)
-
-## process
-## dat.in <- dev.last(device="", limit=NA)
-## dat <- dev.trans(dat.in)
-
-
-## El
-## el <- kamstrup.power(subset(dat, Source=="Kamstrup" & Value > 1))
-
 
 
 # Define UI for application that draws a histogram
@@ -60,12 +58,6 @@ ui <- fluidPage(
       sidebarPanel(width = 2,
                    uiOutput("datepicker")
                    , selectInput("day_range", "Days to show", choices=c(1:10), selected = 1)
-         # dateInput("date",
-         #           "Select Day",
-         #           min = Day1,
-         #           max = textOutput("today"),
-         #           value = textOutput("today"),
-         #           weekstart=1)
        , hr()
        , downloadButton("downloadWater", "Water Data")
        , downloadButton("downloadPower", "Power Data")
@@ -87,7 +79,7 @@ ui <- fluidPage(
                      , dataTableOutput("power_table")  
                        )
             , tabPanel("Enviroment"
-                     , uiOutput("select_sens")
+                     ## , uiOutput("select_sens")
                      ##, plotlyOutput("envi")
                        ##                     , dataTableOutput("envi_table")
                        , plotlyOutput("envi_temp")
@@ -100,6 +92,10 @@ ui <- fluidPage(
                      , plotlyOutput("wifi_graph")
                      , dataTableOutput("wifi_table")  
                        )
+            , tabPanel("Database"
+                       , pg_explorerInput("database")
+                       )
+              
              ## , tabPanel("Current",
              ##           dashboardBody (
              ##           fluidRow(
@@ -157,7 +153,7 @@ server <- function(input, output) {
     })
 
     SensorNames <- reactive({
-        
+        sensor_names()
     })
 
 
@@ -199,8 +195,8 @@ server <- function(input, output) {
     output$envi_temp <- renderPlotly({
       req(input$date)
       d1 <- EnviDat()
-      if(length(input$sensor_selected) >0)
-          d1 <- subset(d1, MAC %in% input$sensor_selected)
+      ## if(length(input$sensor_selected) >0)
+      ##     d1 <- subset(d1, MAC %in% input$sensor_selected)
       p1 <- plot.envi_part(d1, Part = "temperature")
       ggplotly(p1)
     })
@@ -208,8 +204,8 @@ server <- function(input, output) {
     output$envi_hum <- renderPlotly({
       req(input$date)
       d1 <- EnviDat()
-      if(length(input$sensor_selected) >0)
-          d1 <- subset(d1, MAC %in% input$sensor_selected)
+      ## if(length(input$sensor_selected) >0)
+      ##     d1 <- subset(d1, MAC %in% input$sensor_selected)
       p1 <- plot.envi_part(d1, Part = "humidity")
       ggplotly(p1)
     })
@@ -217,8 +213,8 @@ server <- function(input, output) {
     output$envi_pressure <- renderPlotly({
       req(input$date)
       d1 <- EnviDat()
-      if(length(input$sensor_selected) >0)
-          d1 <- subset(d1, MAC %in% input$sensor_selected)
+      ## if(length(input$sensor_selected) >0)
+      ##     d1 <- subset(d1, MAC %in% input$sensor_selected)
       p1 <- plot.envi_part(d1, Part = "pressure")
       ggplotly(p1)
     })
@@ -226,8 +222,8 @@ server <- function(input, output) {
     output$envi_light <- renderPlotly({
       req(input$date)
       d1 <- EnviDat()
-      if(length(input$sensor_selected) >0)
-          d1 <- subset(d1, MAC %in% input$sensor_selected)
+      ## if(length(input$sensor_selected) >0)
+      ##     d1 <- subset(d1, MAC %in% input$sensor_selected)
       p1 <- plot.envi_part(d1, Part = "light")
       ggplotly(p1)
     })
@@ -235,8 +231,8 @@ server <- function(input, output) {
     output$envi_pir <- renderPlotly({
       req(input$date)
       d1 <- EnviDat()
-      if(length(input$sensor_selected) >0)
-          d1 <- subset(d1, MAC %in% input$sensor_selected)
+      ## if(length(input$sensor_selected) >0)
+      ##     d1 <- subset(d1, MAC %in% input$sensor_selected)
       d2 <-  transform(d1, PIR = ifelse(pir, as.numeric(as.factor(MAC)),as.numeric(as.factor(MAC))-.5))
       p1 <- plot.envi_part(d2, Part = "PIR")
       ggplotly(p1)
@@ -368,6 +364,9 @@ server <- function(input, output) {
       Dat
     })
     
+    ## For Database Tab
+    callModule(pg_explorer, "database")
+
 }
 
 # Run the application 
