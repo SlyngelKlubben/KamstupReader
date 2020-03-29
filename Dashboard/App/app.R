@@ -21,8 +21,8 @@ library(openxlsx)
 library(shinydashboard)
 library(reshape2)
 
-library(shinycssloaders) ## spinner
-library(shinyBS) ## tooltip
+## library(shinycssloaders) ## spinner
+## library(shinyBS) ## tooltip
 
 ## Local funcs
 source("lib.R")
