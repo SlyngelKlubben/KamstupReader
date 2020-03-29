@@ -12,7 +12,7 @@ pg_explorerInput <- function(id) {
         fluidRow(
             column(3,uiOutput(ns('filterColumn')))
           , column(3,uiOutput(ns("filterString")))
-          , bsTooltip(ns("filterString"), 'Filter is using <a href="https://www.postgresql.org/docs/10/functions-matching.html">regular expressions</a>', trigger = "focus")
+          ## , bsTooltip(ns("filterString"), 'Filter is using <a href="https://www.postgresql.org/docs/10/functions-matching.html">regular expressions</a>', trigger = "focus")
           , column(3,uiOutput(ns("caseSensitivity")))
         ), 
         hr(),
@@ -26,9 +26,9 @@ pg_explorerInput <- function(id) {
             h2(textOutput(ns("tableName")))
           , tabsetPanel(
                 tabPanel("Data",
-                         withSpinner(dataTableOutput(ns('result'))), type = 4),
+                         dataTableOutput(ns('result'))),
                 tabPanel("Columns",
-                         withSpinner(dataTableOutput(ns('columns')), type = 1))
+                         dataTableOutput(ns('columns')))
             )
         )
     )
