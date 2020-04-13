@@ -2,7 +2,7 @@ library(futile.logger)
 library(magrittr)
 
 ## Functions: These should go into separate file later
-pg.new <- function(Conf = list(db=list(host="192.168.0.47",port=5432, db="hus", user="jacob", pw="jacob"))) {
+pg.new <- function(Conf = list(db=list(host="192.168.0.47",port=5432, db="hus", user="jacob", pw="jacob", timezone = "Europe/Copenhagen"))) {
     library(futile.logger)
     flog.trace("pg.new")
     library(DBI)
@@ -14,6 +14,7 @@ pg.new <- function(Conf = list(db=list(host="192.168.0.47",port=5432, db="hus", 
                      user = Conf$db$user,
                      password = Conf$db$pw)
     .pg <<- con
+    .tz <<- Conf$db$timezone
     con
 }
 pg.close <- function(con=.pg) {
@@ -21,7 +22,7 @@ pg.close <- function(con=.pg) {
     ## https://stackoverflow.com/a/50795602
     lapply(dbListConnections(drv = dbDriver("PostgreSQL")), function(x) {dbDisconnect(conn = x)})
 }
-pg.get <- function(q, tz=Conf$db$timezone, con=.pg) {
+pg.get <- function(q, tz=.tz, con=.pg) {
     futile.logger::flog.trace("pg.get")
     stmt <- paste(q, ";")
     stmt <- sub(';+$',';', stmt)
