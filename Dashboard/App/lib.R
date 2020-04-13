@@ -37,7 +37,7 @@ dat.day <- function(date, days = 1, table=Conf$db$vandtable, con=.pg){
     flog.trace("dat.day")
     days <- as.numeric(days)
     if(is.na(days)) days <- 1
-    stmt <- sprintf("SELECT * FROM %s where timestamp >= '%s' AND date_trunc('day',timestamp) <= '%s' ORDER BY timestamp, id  DESC", table, as.Date(date) - days, as.Date(date)) ## by id
+    stmt <- sprintf("SELECT * FROM %s where timestamp >= '%s' AND date_trunc('day',timestamp) <= '%s' ORDER BY timestamp, id  DESC", table, as.Date(date) - days+1 , as.Date(date)) ## by id
     res <- pg.get(q=stmt, con=con)    
     if(nrow(res) == 0)
         return(NULL)
