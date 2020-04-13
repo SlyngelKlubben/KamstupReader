@@ -1,3 +1,5 @@
+BigNum <- function(x) format(as.numeric(as.character(x)), big.mark = "_", scientific = FALSE)
+
 pg_explorerInput <- function(id) {
     ns <- NS(id)
     tagList(

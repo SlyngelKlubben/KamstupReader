@@ -8,6 +8,8 @@
 #    http://shiny.rstudio.com/
 #
 
+rm(list=ls())
+
 library(shiny)
 
 library(plyr)
@@ -36,12 +38,12 @@ if(!file.exists("config.yml")) {
     stop("Needs config file to find database")
 }
 Conf <- yaml.load_file("config.yml") ## add symlink locally
-flog.info("Read config. Using db on %s", Conf$db$profile)
+flog.info("Read config. Using db on %s. tz=%s", Conf$db$profile, Conf$db$timezone)
 
 pg.new(Conf)
 
 ## get Date Range
-DateRange <-  pg.get(q=sprintf("select min(timestamp), max(timestamp) from vand", Conf$db$envitable))
+DateRange <-  pg.get(q=sprintf("select min(timestamp), max(timestamp) from %s", Conf$db$envitable),)
 
 Day1 <- as.Date(DateRange$min)
 Day2 <- as.Date(DateRange$max)
