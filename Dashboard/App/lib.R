@@ -21,12 +21,13 @@ pg.close <- function(con=.pg) {
     ## https://stackoverflow.com/a/50795602
     lapply(dbListConnections(drv = dbDriver("PostgreSQL")), function(x) {dbDisconnect(conn = x)})
 }
-pg.get <- function(q, con=.pg) {
+pg.get <- function(q, tz=Conf$db$timezone, con=.pg) {
     futile.logger::flog.trace("pg.get")
     stmt <- paste(q, ";")
     stmt <- sub(';+$',';', stmt)
     flog.debug(stmt)
-    dbGetQuery(conn=con, statement=stmt)  
+    res <- dbGetQuery(conn=con, statement=stmt)
+    lubridate::with_tz(res, tzone = tz)
 }
 
 dat.day <- function(date, days = 1, table=Conf$db$vandtable, con=.pg){
