@@ -228,9 +228,6 @@ sensor_names <- function(con = .pg) {
     res
 }
 
-BigNum <- function(x) format(as.numeric(as.character(x)), big.mark = "'", scientific = FALSE)
-
-
 ## form nzdl.R
 pg.schemas <- function(con=.pg) {
   pg.get(q="select schema_name from information_schema.schemata order by schema_name", con=con)
