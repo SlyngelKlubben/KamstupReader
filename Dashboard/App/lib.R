@@ -43,7 +43,7 @@ dat.day <- function(date, days = 1, table=Conf$db$vandtable, con=.pg){
         return(NULL)
     res$Display <- res$MAC
     Sensors <- sensor_names()
-    if(!is.null(Sensors)) {
+    if(!is.null(Sensors) && nrow(Sensors) > 0) {
         res <- checkRows(nrow(res), merge(res, Sensors, by.y = "mac", by.x="MAC", all.x=TRUE))
         res$Display <- paste(res$name, res$MAC)
     }
