@@ -9,12 +9,12 @@
 #include <ESP8266HTTPClient.h>
 #include <Arduino.h>
  
-#include "parameters.h"  // const char* dbstring1 = "http://192.168.X.X:3000/hus/public";
+#include "parameters.h"  // const char* dbstring1 = "http://192.168.1.4:3000/hus/public/relay?_page=1&_page_size=1&_select=state"
  
- 
-const char* softwareVersion = "20200505"; // Update This!!
-const char* dbask = "lightstate";
-const char* db = "envi";
+const char* softwareVersion = "20200526"; // Update This!!
+
+// const char* dbask = "lightstate";
+// const char* db = "envi";
  
 // String variables
 char Json[2000];
