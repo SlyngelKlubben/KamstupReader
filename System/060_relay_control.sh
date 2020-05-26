@@ -59,7 +59,7 @@ LANGUAGE PLPGSQL;"
 
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "CREATE OR REPLACE VIEW public.relay AS
 SELECT public.relay_state(
- task, now()::time with time zone, off_time_start::time with time zone, off_time_end::time with time zone, envi.light::double precision, off_light_level::double precision) 
+ task::text, now()::time with time zone, off_time_start::time with time zone, off_time_end::time with time zone, envi.light::double precision, off_light_level::double precision) 
 AS state, relay_mac, envi.light, envi.id as envi_id, relay_control.id as relay_id
 FROM
 relay_control 
