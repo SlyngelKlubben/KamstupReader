@@ -57,6 +57,8 @@ LANGUAGE PLPGSQL;"
 # ORDER BY relay_control.id desc, envi.id desc
 # limit 1;
 
+sleep 3
+
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "CREATE OR REPLACE VIEW public.relay AS
 SELECT public.relay_state(
  task::text, now()::time with time zone, off_time_start::time with time zone, off_time_end::time with time zone, envi.light::double precision, off_light_level::double precision) 
