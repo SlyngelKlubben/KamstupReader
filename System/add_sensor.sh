@@ -1,11 +1,36 @@
 ## Add a sensor
 ## add_sensor.sh MAC NAME IP X Y Z
-MAC=$1
-NAME=$2
-IP=$3
-X=$4
-Y=$5
-Z=$6
+# MAC=$1
+# NAME=$2
+# IP=$3
+X=""
+Y=""
+Z=""
+
+usage() {
+    echo -e "Script for adding sensor to database.\nUsage:\n $0 -m MAC -n Name -i IP -x X coordinate, -y Y coord -z Z coord "
+    echo "Got arguments: MAC: $MAC, Name: $NAME. IP: $IP, X: $X, Y:$Y, Z:$H"
+    exit
+}
+
+
+while getopts m:n:i:x:y:z:h option
+do
+    case "${option}"
+    in
+	m) MAC=${OPTARG};;
+	n) NAME=${OPTARG};;
+	i) IP=${OPTARG};;
+	x) X=${OPTARG};;
+	y) Y=${OPTARG};;
+	z) Z=${OPTARG};;
+	h) usage
+    esac
+done
+
+if [ -z $MAC ] || [ -z $IP ] || [ -z $NAME ] ; then
+    usage
+fi
 
 ## Check format of first parameter
 MAC=$(echo $MAC | sed "s/\(.*\)/\U\1/")
@@ -27,7 +52,7 @@ else
 fi
 
 
-if [[ -n "$6" ]] ; then
+if [[ -n "$Y" ]] ; then
     STMT="{\"mac\":\"$MAC\",\"name\":\"$NAME\",\"location\":\"SRID=25832;POINTZ($X $Y $Z)\"}"
 else
     STMT="{\"mac\":\"$MAC\",\"name\":\"$NAME\"}"
