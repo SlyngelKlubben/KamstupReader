@@ -10,7 +10,8 @@ PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "CREATE TABLE public.relay_control ( i
 			   off_time_start TIME WITH TIME ZONE,
 			   off_time_end TIME WITH TIME ZONE,
 			   envi_mac TEXT,
-			   off_light_level DOUBLE PRECISION
+			   off_light_level DOUBLE PRECISION,
+			   ask_interval_ms INTEGER DEFAULT 10000
 			   );"
 
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "CREATE OR REPLACE FUNCTION public.relay_state (
@@ -62,7 +63,8 @@ sleep 3
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc 'CREATE OR REPLACE VIEW public.relay AS
 SELECT public.relay_state(
  task::text, now()::time with time zone, off_time_start::time with time zone, off_time_end::time with time zone, envi.light::double precision, off_light_level::double precision) 
-AS state, relay_mac, envi.light, envi.id as envi_id, relay_control.id as relay_id
+AS state, relay_mac, envi.light, envi.id as envi_id, relay_control.id as relay_id,
+envi."MAC" as envi_mac
 FROM
 relay_control 
 JOIN envi ON relay_control.envi_mac = envi."MAC"
