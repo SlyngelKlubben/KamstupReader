@@ -71,3 +71,10 @@ JOIN envi ON relay_control.envi_mac = envi."MAC"
 ORDER BY envi.id desc, relay_control.id desc;
 '
 
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "CREATE TABLE public.relay_pin (
+id SERIAL,
+relay_mac TEXT,
+pin_state TEXT,
+pin_expire TIMESTAMP WITH TIME ZONE
+);"
+
