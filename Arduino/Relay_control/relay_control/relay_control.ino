@@ -2,19 +2,19 @@
 * Slyngelstue Relay controller
 *  Vin - D7
 *  GND - D8
-*  Signal - D6
+*  Signal - D3
 */
  
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <Arduino.h>
  
-#include "parameters.h"  // const char* dbstring1 = "http://192.168.X.X:3000/hus/public";
+#include "parameters.h"  
  
- 
-const char* softwareVersion = "20200505"; // Update This!!
-const char* dbask = "lightstate";
-const char* db = "envi";
+const char* softwareVersion = "20200526"; // Update This!!
+
+// const char* dbask = "lightstate";
+// const char* db = "envi";
  
 // String variables
 char Json[2000];
@@ -37,7 +37,7 @@ unsigned long timer_periods = 0;
 unsigned long last_timer_value_sent = 0;
 unsigned long delta_ms = 0;
  
-unsigned long WhenToAsk = 1000;
+unsigned long WhenToAsk = 120000;
  
 // Last http return code
 int LastHttp = 0;
@@ -58,8 +58,8 @@ void setup() {
   digitalWrite(D7, HIGH);  //  D7 = used to power relay (Vin)
   pinMode(D8, OUTPUT); // D8 = used to power relay (GND)
   digitalWrite(D8, LOW);  //  D8 = used to power relay (GND)
-  pinMode(D6, OUTPUT); // D6 = used to signal relay (SIGNAL)
-  digitalWrite(D7, OnState);  //  D6 = used to signal relay (SIGNAL) - Default = Off
+  pinMode(D3, OUTPUT); // D3 = used to signal relay (SIGNAL)
+  digitalWrite(D3, OnState);  //  D3 = used to signal relay (SIGNAL) - Default = Off
   
   Serial.begin(115200);
   delay(10);
@@ -67,7 +67,7 @@ void setup() {
   wifi_connect();
   // Construct dbstring
   // dbstring1 hentes fra parameters.h
-  sprintf(dbstring, "%s/%s", dbstring1, db);
+  sprintf(dbstring, "%s&relay_mac=%s", dbstring1, WiFi.macAddress().c_str()); // http://192.168.1.4:3000/hus/public/relay?_page=1&_page_size=1&_select=state&relay_mac=84:F3:EB:3B:7C:ET
  
   Serial.println("Entering loop");
 }
@@ -80,23 +80,23 @@ void loop() {
     timer(s2);
 //    envi_values(s3);
     sprintf(Json, "{%s, %s, \"software_version\":\"%s\"}", s1, s2, softwareVersion); // Generate the json string for the database
-    call_db();
+    // call_db();
     digitalWrite(LED_BUILTIN, HIGH);   // turn the LED off (HIGH is the voltage level)
  
  
-// ask_db();
+   ask_db();
  
   // After OnState received from database - set state
-  digitalWrite(D6, OnState);  //  D6 = used to signal relay (SIGNAL)
+  digitalWrite(D3, OnState);  //  D3 = used to signal relay (SIGNAL)
  
    delay(WhenToAsk);
  
-    OnState=true;
+    // OnState=true;
  
-  digitalWrite(D6, OnState);  //  D6 = used to signal relay (SIGNAL)
+  // digitalWrite(D3, OnState);  //  D3 = used to signal relay (SIGNAL)
   
-   delay(WhenToAsk);
-    OnState=false;
+  // delay(WhenToAsk);
+    // OnState=false;
   
 }
  
@@ -112,7 +112,7 @@ void ask_db() {
  
 //curl -H "Content-Type: application/json" -X GET  'http://192.168.1.4:3000/hus/public/envi?id=1'
     OnState=true;
-    WhenToAsk=1000;
+    // WhenToAsk=1000;
  
   if((WiFi.status() == WL_CONNECTED)) {
  
@@ -122,20 +122,26 @@ void ask_db() {
     }
     HTTPClient http; // here or in loop
     http.begin(dbstring);
- //   get_string = 'http://192.168.1.4:3000/hus/public/envi?id=1'
-//    int httpCode = http.get(get_string);    // httpCode will be negative on error
-//   Serial.printf("[HTTP] httpCode: %d\n", httpCode);
-//    if(httpCode > 0) {
-//     if(httpCode == HTTP_CODE_OK) {
-//       my_status = http.getString();
-        Serial.println("POST request accepted. Server reply: ");
-        Serial.println(my_status);
-//      }
-//    } else {
-//        Serial.printf("POST failed, error: %s\n", http.errorToString(httpCode).c_str());
-//    }
-//    http.end();
-  } else {
+    int httpCode = http.GET();    // httpCode will be negative on error
+    Serial.printf("[HTTP] httpCode: %d\n", httpCode);
+    if(httpCode > 0) {
+      if(httpCode == HTTP_CODE_OK) { 
+        my_status = http.getString();
+      }
+      Serial.println("POST request accepted. Server reply: ");
+      Serial.println(my_status);
+      if(my_status == "[{\"state\":\"off\"}]") {
+        OnState=false;
+        Serial.println("Switched state to off");
+      } else {
+        OnState=true;
+        Serial.println("Switched state to on");        
+      }
+    } else {
+          Serial.printf("POST failed, error: %s\n", http.errorToString(httpCode).c_str());
+      }
+      http.end();
+   } else {
       Serial.println("No wifi connection") ;
   }
 }
@@ -158,6 +164,7 @@ void call_db() {
     }
     HTTPClient http; // here or in loop
     http.begin(dbstring);
+    // TODO: Replace this with GET and check if reply is [{"state":"on"}] or [{"state":"off"}]
     int httpCode = http.POST(Json);    // httpCode will be negative on error
     Serial.printf("[HTTP] httpCode: %d\n", httpCode);
     if(httpCode > 0) {

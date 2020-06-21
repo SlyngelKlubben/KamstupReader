@@ -22,6 +22,7 @@ library(yaml)
 library(openxlsx)
 library(shinydashboard)
 library(reshape2)
+library(DT)
 
 ## library(shinycssloaders) ## spinner
 ## library(shinyBS) ## tooltip
@@ -70,17 +71,7 @@ ui <- fluidPage(
       # Show a plot of the generated distribution
       mainPanel(
           tabsetPanel(
-              tabPanel("Water",
-                       plotlyOutput("water_rate")
-                     , plotlyOutput("water_total")
-                     , dataTableOutput("water_table")  
-                       )
-             ,tabPanel("Power",
-                       plotlyOutput("powerPlot") ## power
-                     , plotlyOutput("kWh")
-                     , dataTableOutput("power_table")  
-                       )
-            , tabPanel("Enviroment"
+            tabPanel("Enviroment"
                      ## , uiOutput("select_sens")
                      ##, plotlyOutput("envi")
                        ##                     , dataTableOutput("envi_table")
@@ -90,6 +81,16 @@ ui <- fluidPage(
                        , plotlyOutput("envi_light")
                        , plotlyOutput("envi_pir")
                        )
+            , tabPanel("Water",
+                       plotlyOutput("water_rate")
+                     , plotlyOutput("water_total")
+                     , dataTableOutput("water_table")  
+                       )
+             ,tabPanel("Power",
+                       plotlyOutput("powerPlot") ## power
+                     , plotlyOutput("kWh")
+                     , dataTableOutput("power_table")  
+                       )
             , tabPanel("Wifi Signal"
                      , plotlyOutput("wifi_graph")
                      , dataTableOutput("wifi_table")  
@@ -97,7 +98,11 @@ ui <- fluidPage(
             , tabPanel("Database"
                        , pg_explorerInput("database")
                        )
-              
+          , tabPanel("Relays"
+                   ## , uiOutput("relay_controller")
+                   , DT::dataTableOutput("relay_table")
+                       )
+            
              ## , tabPanel("Current",
              ##           dashboardBody (
              ##           fluidRow(
@@ -196,7 +201,7 @@ server <- function(input, output) {
 
     output$envi_temp <- renderPlotly({
       req(input$date)
-      d1 <- EnviDat()
+      req(d1 <- EnviDat())
       ## if(length(input$sensor_selected) >0)
       ##     d1 <- subset(d1, MAC %in% input$sensor_selected)
       p1 <- plot.envi_part(d1, Part = "temperature")
@@ -205,7 +210,7 @@ server <- function(input, output) {
 
     output$envi_hum <- renderPlotly({
       req(input$date)
-      d1 <- EnviDat()
+      req(d1 <- EnviDat())
       ## if(length(input$sensor_selected) >0)
       ##     d1 <- subset(d1, MAC %in% input$sensor_selected)
       p1 <- plot.envi_part(d1, Part = "humidity")
@@ -214,7 +219,7 @@ server <- function(input, output) {
 
     output$envi_pressure <- renderPlotly({
       req(input$date)
-      d1 <- EnviDat()
+      req(d1 <- EnviDat())
       ## if(length(input$sensor_selected) >0)
       ##     d1 <- subset(d1, MAC %in% input$sensor_selected)
       p1 <- plot.envi_part(d1, Part = "pressure")
@@ -223,7 +228,7 @@ server <- function(input, output) {
 
     output$envi_light <- renderPlotly({
       req(input$date)
-      d1 <- EnviDat()
+      req(d1 <- EnviDat())
       ## if(length(input$sensor_selected) >0)
       ##     d1 <- subset(d1, MAC %in% input$sensor_selected)
       p1 <- plot.envi_part(d1, Part = "light")
@@ -232,7 +237,7 @@ server <- function(input, output) {
 
     output$envi_pir <- renderPlotly({
       req(input$date)
-      d1 <- EnviDat()
+      req(d1 <- EnviDat())
       ## if(length(input$sensor_selected) >0)
       ##     d1 <- subset(d1, MAC %in% input$sensor_selected)
       d2 <-  transform(d1, PIR = ifelse(pir, as.numeric(as.factor(MAC)),as.numeric(as.factor(MAC))-.5))
@@ -243,7 +248,7 @@ server <- function(input, output) {
     
     output$envi <- renderPlotly({
       req(input$date)
-      d1 <- EnviDat()
+      req(d1 <- EnviDat())
       DateRange <- range(as.Date(d1$Time))
       DateRangeStr <- sprintf("%s - %s", DateRange[1], DateRange[2])        
       if(length(input$sensor_selected) >0)
@@ -305,7 +310,7 @@ server <- function(input, output) {
     
     output$power <- renderPlotly({
         req(input$date)
-        Dat <- Power()
+        req(Dat <- Power())
         DateRange <- range(as.Date(Dat$Time))
         DateRangeStr <- sprintf("%s - %s", DateRange[1], DateRange[2])
         p1 <- ggplot(dat=Dat, aes(x = Time, y=PowerW)) +  geom_step() + ggtitle(sprintf("Power consumption %s",DateRangeStr))
@@ -313,7 +318,7 @@ server <- function(input, output) {
     })
     output$powerPlot <- renderPlotly({
         req(input$date)
-        Dat <- Power()
+        req(Dat <- Power())
         DateRange <- range(as.Date(Dat$Time))
         DateRangeStr <- sprintf("%s - %s", DateRange[1], DateRange[2])        
         p1 <- ggplot(dat=Power(), aes(x = Time, y=pmin(power_w,10000))) +  geom_line() + ggtitle(sprintf("Power consumption %s", DateRangeStr))
@@ -328,7 +333,7 @@ server <- function(input, output) {
     })
     output$power_table <- renderDataTable({
         req(input$date)
-        Power()
+        req(Power())
     }, options = list(pageLength=10)
     )   
     output$downloadPower <- downloadHandler(
@@ -357,18 +362,28 @@ server <- function(input, output) {
 
     output$wifi_graph<- renderPlotly({
       req(input$date)
-      Dat <- Wifi()
+      req(Dat <- Wifi())
       plot.wifi(Dat)
     })
     output$wifi_table <- renderDataTable({
       req(input$date)
-      Dat <- Wifi()
+      req(Dat <- Wifi())
       Dat
     })
     
     ## For Database Tab
     callModule(pg_explorer, "database")
 
+    ## Relay tab
+    output$relay_table <- DT::renderDataTable({
+        pg.relay_list() 
+    }, editable="pin_state")
+
+    ## Control table
+    output$relay_controller <- renderUI({
+        pg.relay_list() 
+    })
+    
 }
 
 # Run the application 

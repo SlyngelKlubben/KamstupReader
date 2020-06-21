@@ -265,3 +265,30 @@ pg.columns <- function(table, schema="public", sort_columns = TRUE,con=.pg) {
   pg.get(q=stmt)
 }
 
+pg.relay_list <- function(con = .pg) {
+    stmt <- "select distinct(relay_mac) from relay_control"
+    Macs <- pg.get(q=stmt)
+    res <- ddply(Macs, ~ relay_mac , pg.relay_current_state)
+    res$Display <- res$relay_mac
+    Sensors <- sensor_names()
+    if(!is.null(Sensors) && nrow(Sensors) > 0) {
+        res <- checkRows(nrow(res), merge(res, Sensors, by.y = "mac", by.x="relay_mac", all.x=TRUE))
+        res$Display <- paste(res$name, res$relay_mac)
+    }
+    PinState <- pg.relay_pin()
+    if(!is.null(PinState) && nrow(PinState) > 0) {
+        res <- checkRows(nrow(res), merge(res, PinState,  by="relay_mac", all.x=TRUE))
+    }
+    res
+}
+
+pg.relay_current_state <- function(mac, con = .pg) {
+    stmt <- sprintf("select * from relay where relay_mac = '%s' limit 1", mac)
+    pg.get(q=stmt)
+}
+
+pg.relay_pin <- function(con = .pg) {
+    stmt <- sprintf("select * from relay_pin ")
+    pg.get(q=stmt)
+}
+
