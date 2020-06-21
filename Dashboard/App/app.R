@@ -35,13 +35,16 @@ source("pg_explorer.R")
 
 ## flog.threshold(TRACE)
 
+NeedTables <- c("el", "vand", "envi", "relay_control", "relay", "relay_pin")
+
 if(!file.exists("config.yml")) {
     stop("Needs config file to find database")
 }
 Conf <- yaml.load_file("config.yml") ## add symlink locally
 flog.info("Read config. Using db on %s. tz=%s", Conf$db$profile, Conf$db$timezone)
 
-pg.new(Conf)
+if( !exists(".pg"))
+    pg.new(Conf)
 
 ## get Date Range
 DateRange <-  pg.get(q=sprintf("select min(timestamp), max(timestamp) from %s", Conf$db$envitable),)
@@ -99,8 +102,10 @@ ui <- fluidPage(
                        , pg_explorerInput("database")
                        )
           , tabPanel("Relays"
-                   ## , uiOutput("relay_controller")
                    , DT::dataTableOutput("relay_table")
+                   , h3("Select a relay to pin")
+                   , uiOutput("relay_pinner")
+                   , DT::dataTableOutput("relay_pins")
                        )
             
              ## , tabPanel("Current",
@@ -376,13 +381,31 @@ server <- function(input, output) {
 
     ## Relay tab
     output$relay_table <- DT::renderDataTable({
+        MissedTables <- setdiff(NeedTables,  pg.tables()$table_name)        
+        validate(need(length(MissedTables) == 0 , sprintf("Missing Tables: %s", paste(MissedTables,collapse =", "))))
         pg.relay_list() 
-    }, editable="pin_state")
+    }, selection = "single", options= list(dom="t", ordering = FALSE))
 
     ## Control table
-    output$relay_controller <- renderUI({
-        pg.relay_list() 
+    output$relay_pinner <- renderUI({
+        tagList(
+            h3(sprintf("Pin State of relay: %s", input$relay_table_rows_selected)),
+            radioButtons("pin_state", "State", choices=c("On", "Off")),
+            datetimeSlider("pin_expire", "Until", From = Sys.time(), To = Sys.time() + 86400, Width="100%"),
+            actionButton("pin_me", "Pin Relay")            
+            )
     })
+
+    ## Pinned relays
+    output$relay_pins <- DT::renderDataTable({
+        ## Todo: eventreactive on pin_me
+        pg.relay_pin()
+        })
+
+    ## TODO: observeEvent on pin_me:
+    ## Get selecte relay mac
+    ## insert into relay_pin values (default, '84:F3:EB:3B:7C:EB', 'on', '2020-06-09T22:00:00+2');
+
     
 }
 

@@ -292,3 +292,10 @@ pg.relay_pin <- function(con = .pg) {
     pg.get(q=stmt)
 }
 
+datetimeSlider <- function(id, message="Pick Timestamp", From = Sys.time(), To = Sys.time() + 86400, Width=NULL){
+    sliderInput(id, message,
+                min=as.POSIXlt(From),
+                max=as.POSIXlt(To),
+                value=as.POSIXlt(From), width=Width
+                )    
+}
