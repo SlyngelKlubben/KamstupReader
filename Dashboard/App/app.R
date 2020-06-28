@@ -411,8 +411,6 @@ server <- function(input, output) {
         RV$relay_pins
         }, selection = "none")
 
-    # observeEvent(input$pin_me, {RV$relay_pins <- pg.relay_pin()})
-    
     ## Set pin
     observeEvent(input$pin_me, {
         flog.trace("Selected row = %s", input$relay_table_rows_selected)
@@ -422,9 +420,6 @@ server <- function(input, output) {
         RV$relay_pins <- pg.relay_pin()
         RV$relay_list <- pg.relay_list() 
     })
-    ## TODO: observeEvent on pin_me:
-    ## Get selecte relay mac
-    ## insert into relay_pin values (default, '84:F3:EB:3B:7C:EB', 'on', '2020-06-09T22:00:00+2');
 }
 
 
