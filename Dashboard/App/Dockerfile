@@ -1,5 +1,5 @@
 # parent image
-FROM balenalib/armv7hf-debian:buster-build
+FROM balenalib/armv7hf-debian:latest-build
 
 # enable systemd
 ENV INITSYSTEM on
