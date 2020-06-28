@@ -275,10 +275,13 @@ pg.relay_list <- function(con = .pg) {
         res <- checkRows(nrow(res), merge(res, Sensors, by.y = "mac", by.x="relay_mac", all.x=TRUE))
         res$Display <- paste(res$name, res$relay_mac)
     }
-    PinState <- pg.relay_pin()
-    if(!is.null(PinState) && nrow(PinState) > 0) {
-        res <- checkRows(nrow(res), merge(res, PinState,  by="relay_mac", all.x=TRUE))
-    }
+##     PinState <- pg.relay_pin()
+##     if(!is.null(PinState) && nrow(PinState) > 0) {
+##         res <- checkRows(nrow(res), merge(res, PinState,  by="relay_mac", all.x=TRUE))
+## ##        res <-  merge(res, PinState,  by="relay_mac", all.x=TRUE)
+##     }
+    if(!is.null(res$pin_expire))
+        res <- mutate(res,  pin_expire = format(pin_expire))
     res
 }
 
@@ -289,6 +292,25 @@ pg.relay_current_state <- function(mac, con = .pg) {
 
 pg.relay_pin <- function(con = .pg) {
     stmt <- sprintf("select * from relay_pin ")
-    pg.get(q=stmt)
+    mutate(pg.get(q=stmt), pin_expire = format(pin_expire))
 }
 
+datetimeSlider <- function(id, message="Pick Timestamp", From = Sys.time(), To = Sys.time() + 86400, Width=NULL){
+    sliderInput(id, message,
+                min=as.POSIXlt(From),
+                max=as.POSIXlt(To),
+                value=as.POSIXlt(From), width=Width
+                )    
+}
+
+pg.set_pin <- function(mac, state, expire, tz = "Europe/Copenhagen", con = .pg) {
+    expire_time = format(expire, "%Y-%m-%dT%H:%M:%S%z")
+    state <- tolower(state)
+    ## use upsert
+    stmt <- sprintf("INSERT INTO relay_pin (relay_mac, pin_state, pin_expire) VALUES ('%s', '%s', '%s')
+ON CONFLICT ON CONSTRAINT relay_pin_relay_mac_key 
+do update set pin_state = '%s', pin_expire = '%s'
+;", mac, state, expire_time, state, expire_time)
+    flog.trace(stmt)
+    dbGetQuery(conn=con, statement=stmt)
+}

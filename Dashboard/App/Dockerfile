@@ -24,7 +24,8 @@ RUN apt install r-base \
     r-cran-openxlsx \
     r-cran-lubridate \
     r-cran-reshape2 \
-    postgresql-client
+    postgresql-client \
+    r-cran-dt
 
 ENV LC_ALL C.UTF-8
 ENV LANG en_US.UTF-8

@@ -9,6 +9,8 @@
 #
 
 rm(list=ls())
+if(exists(".pg"))
+    rm(".pg")
 
 library(shiny)
 
@@ -27,13 +29,13 @@ library(DT)
 ## library(shinycssloaders) ## spinner
 ## library(shinyBS) ## tooltip
 
+## flog.threshold(TRACE)
+
 ## Local funcs
 source("lib.R")
 
 ## Shiny Modules
 source("pg_explorer.R")
-
-## flog.threshold(TRACE)
 
 if(!file.exists("config.yml")) {
     stop("Needs config file to find database")
@@ -41,7 +43,14 @@ if(!file.exists("config.yml")) {
 Conf <- yaml.load_file("config.yml") ## add symlink locally
 flog.info("Read config. Using db on %s. tz=%s", Conf$db$profile, Conf$db$timezone)
 
-pg.new(Conf)
+if( !exists(".pg"))
+    pg.new(Conf)
+
+RV <- reactiveValues(relay_pins = pg.relay_pin(), relay_list = pg.relay_list())
+
+NeedTables <- c("el", "vand", "envi", "relay_control", "relay", "relay_pin")
+
+
 
 ## get Date Range
 DateRange <-  pg.get(q=sprintf("select min(timestamp), max(timestamp) from %s", Conf$db$envitable),)
@@ -99,8 +108,10 @@ ui <- fluidPage(
                        , pg_explorerInput("database")
                        )
           , tabPanel("Relays"
-                   ## , uiOutput("relay_controller")
                    , DT::dataTableOutput("relay_table")
+                   , h3("Select a relay to pin")
+                   , uiOutput("relay_pinner")
+                   , DT::dataTableOutput("relay_pins")
                        )
             
              ## , tabPanel("Current",
@@ -121,6 +132,8 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
 
+    SelectedRelay <- reactive({RV$relay_list[input$relay_table_rows_selected,]})
+    
     output$datepicker <- renderUI({
       dateInput("date",
                 "Select Day",
@@ -376,15 +389,44 @@ server <- function(input, output) {
 
     ## Relay tab
     output$relay_table <- DT::renderDataTable({
-        pg.relay_list() 
-    }, editable="pin_state")
+        MissedTables <- setdiff(NeedTables,  pg.tables()$table_name)        
+        validate(need(length(MissedTables) == 0 , sprintf("Missing Tables: %s", paste(MissedTables,collapse =", "))))
+        ## pg.relay_list() 
+        RV$relay_list
+    }, selection = "single", options= list(dom="t", ordering = FALSE))
 
     ## Control table
-    output$relay_controller <- renderUI({
-        pg.relay_list() 
+    output$relay_pinner <- renderUI({
+        tagList(
+            h3(sprintf("Pin State of relay: %s", input$relay_table_rows_selected)),
+            radioButtons("pin_state", "State", choices=c("On", "Off")),
+            datetimeSlider("pin_expire", "Until", From = Sys.time(), To = Sys.time() + 86400, Width="100%"),
+            actionButton("pin_me", "Pin Relay")            
+            )
     })
+
+    ## Pinned relays
+    output$relay_pins <- DT::renderDataTable({
+        ## Todo: eventreactive on pin_me
+        RV$relay_pins
+        }, selection = "none")
+
+    # observeEvent(input$pin_me, {RV$relay_pins <- pg.relay_pin()})
     
+    ## Set pin
+    observeEvent(input$pin_me, {
+        flog.trace("Selected row = %s", input$relay_table_rows_selected)
+        validate(need(input$relay_table_rows_selected, message="Select a relay to pin"))
+        Relay <- SelectedRelay()
+        pg.set_pin(mac = Relay$relay_mac, state = input$pin_state, expire = input$pin_expire, tz = Conf$db$timezone)
+        RV$relay_pins <- pg.relay_pin()
+        RV$relay_list <- pg.relay_list() 
+    })
+    ## TODO: observeEvent on pin_me:
+    ## Get selecte relay mac
+    ## insert into relay_pin values (default, '84:F3:EB:3B:7C:EB', 'on', '2020-06-09T22:00:00+2');
 }
+
 
 # Run the application 
 app <- shinyApp(ui = ui, server = server)

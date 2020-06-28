@@ -28,9 +28,9 @@ pg_explorerInput <- function(id) {
             h2(textOutput(ns("tableName")))
           , tabsetPanel(
                 tabPanel("Data",
-                         dataTableOutput(ns('result'))),
+                         shiny::dataTableOutput(ns('result'))),
                 tabPanel("Columns",
-                         dataTableOutput(ns('columns')))
+                         shiny::dataTableOutput(ns('columns')))
             )
         )
     )
@@ -116,7 +116,7 @@ pg_explorer <- function(input, output, session, con = .pg) {
         flog.trace("generate table")
         pg.get(q=Sql())
     })
-    output$result <- renderDataTable({
+    output$result <- shiny::renderDataTable({
         req(input$schemaSelection)
         req(input$tableSelection)
         req(input$maxRows)
@@ -125,7 +125,7 @@ pg_explorer <- function(input, output, session, con = .pg) {
     },options = list(pageLength = 10))
   
     ## Columns
-    output$columns <- renderDataTable({
+    output$columns <- shiny::renderDataTable({ ## DT always shows GMT
         req(input$tableSelection)
         flog.trace("generate columns list")
         pg.columns(table=input$tableSelection, schema=input$schemaSelection)
