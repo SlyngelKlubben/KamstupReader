@@ -125,7 +125,7 @@ pg_explorer <- function(input, output, session, con = .pg) {
     },options = list(pageLength = 10))
   
     ## Columns
-    output$columns <- shiny::renderDataTable({
+    output$columns <- shiny::renderDataTable({ ## DT always shows GMT
         req(input$tableSelection)
         flog.trace("generate columns list")
         pg.columns(table=input$tableSelection, schema=input$schemaSelection)
