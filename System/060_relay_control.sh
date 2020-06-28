@@ -73,8 +73,8 @@ ORDER BY envi.id desc, relay_control.id desc;
 
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "CREATE TABLE public.relay_pin (
 id SERIAL,
-relay_mac TEXT,
+relay_mac TEXT UNIQUE, 
 pin_state TEXT,
 pin_expire TIMESTAMP WITH TIME ZONE
 );"
-
+## Use upsert to update
