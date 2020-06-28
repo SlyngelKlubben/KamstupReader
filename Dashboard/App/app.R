@@ -9,6 +9,8 @@
 #
 
 rm(list=ls())
+if(exists(".pg"))
+    rm(".pg")
 
 library(shiny)
 
@@ -27,15 +29,13 @@ library(DT)
 ## library(shinycssloaders) ## spinner
 ## library(shinyBS) ## tooltip
 
+## flog.threshold(TRACE)
+
 ## Local funcs
 source("lib.R")
 
 ## Shiny Modules
 source("pg_explorer.R")
-
-## flog.threshold(TRACE)
-
-NeedTables <- c("el", "vand", "envi", "relay_control", "relay", "relay_pin")
 
 if(!file.exists("config.yml")) {
     stop("Needs config file to find database")
@@ -45,6 +45,12 @@ flog.info("Read config. Using db on %s. tz=%s", Conf$db$profile, Conf$db$timezon
 
 if( !exists(".pg"))
     pg.new(Conf)
+
+RV <- reactiveValues(relay_pins = pg.relay_pin(), relay_list = pg.relay_list())
+
+NeedTables <- c("el", "vand", "envi", "relay_control", "relay", "relay_pin")
+
+
 
 ## get Date Range
 DateRange <-  pg.get(q=sprintf("select min(timestamp), max(timestamp) from %s", Conf$db$envitable),)
@@ -126,6 +132,8 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
 
+    SelectedRelay <- reactive({RV$relay_list[input$relay_table_rows_selected,]})
+    
     output$datepicker <- renderUI({
       dateInput("date",
                 "Select Day",
@@ -399,15 +407,24 @@ server <- function(input, output) {
     ## Pinned relays
     output$relay_pins <- DT::renderDataTable({
         ## Todo: eventreactive on pin_me
-        pg.relay_pin()
+        RV$relay_pins
         })
 
+    # observeEvent(input$pin_me, {RV$relay_pins <- pg.relay_pin()})
+    
+    ## Set pin
+    observeEvent(input$pin_me, {
+        flog.trace("Selected row = %s", input$relay_table_rows_selected)
+        validate(need(input$relay_table_rows_selected, message="Select a relay to pin"))
+        Relay <- SelectedRelay()
+        pg.set_pin(mac = Relay$relay_mac, state = input$pin_state, expire = input$pin_expire, tz = Conf$db$timezone)
+        RV$relay_pins <- pg.relay_pin()    
+    })
     ## TODO: observeEvent on pin_me:
     ## Get selecte relay mac
     ## insert into relay_pin values (default, '84:F3:EB:3B:7C:EB', 'on', '2020-06-09T22:00:00+2');
-
-    
 }
+
 
 # Run the application 
 app <- shinyApp(ui = ui, server = server)
