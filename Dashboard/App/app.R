@@ -391,7 +391,8 @@ server <- function(input, output) {
     output$relay_table <- DT::renderDataTable({
         MissedTables <- setdiff(NeedTables,  pg.tables()$table_name)        
         validate(need(length(MissedTables) == 0 , sprintf("Missing Tables: %s", paste(MissedTables,collapse =", "))))
-        pg.relay_list() 
+        ## pg.relay_list() 
+        RV$relay_list
     }, selection = "single", options= list(dom="t", ordering = FALSE))
 
     ## Control table
@@ -418,7 +419,8 @@ server <- function(input, output) {
         validate(need(input$relay_table_rows_selected, message="Select a relay to pin"))
         Relay <- SelectedRelay()
         pg.set_pin(mac = Relay$relay_mac, state = input$pin_state, expire = input$pin_expire, tz = Conf$db$timezone)
-        RV$relay_pins <- pg.relay_pin()    
+        RV$relay_pins <- pg.relay_pin()
+        RV$relay_list <- pg.relay_list() 
     })
     ## TODO: observeEvent on pin_me:
     ## Get selecte relay mac
