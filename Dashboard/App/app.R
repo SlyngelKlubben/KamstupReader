@@ -409,7 +409,7 @@ server <- function(input, output) {
     output$relay_pins <- DT::renderDataTable({
         ## Todo: eventreactive on pin_me
         RV$relay_pins
-        })
+        }, selection = "none")
 
     # observeEvent(input$pin_me, {RV$relay_pins <- pg.relay_pin()})
     
