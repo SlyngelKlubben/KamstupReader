@@ -397,10 +397,12 @@ server <- function(input, output) {
 
     ## Control table
     output$relay_pinner <- renderUI({
+        req(input$relay_table_rows_selected)
         tagList(
             h3(sprintf("Pin State of relay: %s", input$relay_table_rows_selected)),
             radioButtons("pin_state", "State", choices=c("On", "Off")),
-            datetimeSlider("pin_expire", "Until", From = Sys.time(), To = Sys.time() + 86400, Width="100%"),
+            ##datetimeSlider("pin_expire", "Until", From = Sys.time(), To = Sys.time() + 86400, Width="100%"), ## Does not work on Rpi
+            datetimeSlider_rpi("pin_hours", "pin Hours", hours = 24, Width="100%"),
             actionButton("pin_me", "Pin Relay")            
             )
     })
@@ -416,7 +418,9 @@ server <- function(input, output) {
         flog.trace("Selected row = %s", input$relay_table_rows_selected)
         validate(need(input$relay_table_rows_selected, message="Select a relay to pin"))
         Relay <- SelectedRelay()
-        pg.set_pin(mac = Relay$relay_mac, state = input$pin_state, expire = input$pin_expire, tz = Conf$db$timezone)
+        ## Expire <- input$pin_expire ## does not work in Rpi
+        Expire = Sys.time() + 60*60*input$pin_hours
+        pg.set_pin(mac = Relay$relay_mac, state = input$pin_state, expire = Expire, tz = Conf$db$timezone)
         RV$relay_pins <- pg.relay_pin()
         RV$relay_list <- pg.relay_list() 
     })

@@ -303,6 +303,16 @@ datetimeSlider <- function(id, message="Pick Timestamp", From = Sys.time(), To =
                 )    
 }
 
+datetimeSlider_rpi <- function(id, message="Pin hours", hours = 24, Width=NULL){
+    sliderInput(id, message,
+                min=0
+              , max=hours
+              , value=0
+              , width=Width
+                )    
+}
+
+
 pg.set_pin <- function(mac, state, expire, tz = "Europe/Copenhagen", con = .pg) {
     expire_time = format(expire, "%Y-%m-%dT%H:%M:%S%z")
     state <- tolower(state)
