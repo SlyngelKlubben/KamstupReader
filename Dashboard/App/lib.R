@@ -280,8 +280,14 @@ pg.relay_list <- function(con = .pg) {
 ##         res <- checkRows(nrow(res), merge(res, PinState,  by="relay_mac", all.x=TRUE))
 ## ##        res <-  merge(res, PinState,  by="relay_mac", all.x=TRUE)
 ##     }
-    if(!is.null(res$pin_expire))
-        res <- mutate(res,  pin_expire = format(pin_expire))
+    ## if(!is.null(res$pin_expire))
+    ##     res <- mutate(res,  pin_expire = format(pin_expire))
+    ## Format times for DT
+    for (Col in c("pin_expire", "off_time_start","off_time_end")) {
+        if(Col %in% names(res)) {
+            res[[Col]] <- format(res[[Col]])
+        }
+    }
     res
 }
 
@@ -321,6 +327,23 @@ pg.set_pin <- function(mac, state, expire, tz = "Europe/Copenhagen", con = .pg) 
 ON CONFLICT ON CONSTRAINT relay_pin_relay_mac_key 
 do update set pin_state = '%s', pin_expire = '%s'
 ;", mac, state, expire_time, state, expire_time)
+    flog.trace(stmt)
+    dbGetQuery(conn=con, statement=stmt)
+}
+
+pg.update_relay_control <- function(relay_mac, off_time_start, off_time_end, off_light_level, envi_mac, con = .pg) {
+    flog.trace("Relay_mac: %s", relay_mac)
+    flog.trace("off_time_start: %s", off_time_start)
+    flog.trace("off_light_end: %s", off_time_end)
+    flog.trace("off_light_level: %s", off_light_level)
+    flog.trace("envi_mac: %s", envi_mac)
+    stmt <- sprintf("UPDATE public.relay_control
+SET off_time_start = '%s',
+off_time_end = '%s',
+off_light_level = '%s',
+envi_mac = '%s'
+where relay_mac = '%s'
+;", off_time_start, off_time_end, off_light_level, envi_mac, relay_mac)
     flog.trace(stmt)
     dbGetQuery(conn=con, statement=stmt)
 }

@@ -109,7 +109,7 @@ ui <- fluidPage(
                        )
           , tabPanel("Relays"
                    , DT::dataTableOutput("relay_table")
-                   , h3("Select a relay to pin")
+                   , h3("Click a row to select a relay to pin or update")
                    , uiOutput("relay_pinner")
                    , DT::dataTableOutput("relay_pins")
                        )
@@ -403,7 +403,11 @@ server <- function(input, output) {
             radioButtons("pin_state", "State", choices=c("On", "Off")),
             ##datetimeSlider("pin_expire", "Until", From = Sys.time(), To = Sys.time() + 86400, Width="100%"), ## Does not work on Rpi
             datetimeSlider_rpi("pin_hours", "pin Hours", hours = 24, Width="100%"),
-            actionButton("pin_me", "Pin Relay")            
+            actionButton("pin_me", "Pin Relay", style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
+          , h3("Update Relay")
+          , lapply(c("off_time_start", "off_time_end", "off_light_level", "envi_mac"), function(x){ if(!is.na(y <- RV$relay_list[input$relay_table_rows_selected, x])){textInput(paste("edit",x, sep="."), label=x, value = y)}})
+          , actionButton("update_relay", "Update Relay", style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
+            , p() , hr() , p()
             )
     })
 
@@ -422,6 +426,19 @@ server <- function(input, output) {
         Expire = Sys.time() + 60*60*input$pin_hours
         pg.set_pin(mac = Relay$relay_mac, state = input$pin_state, expire = Expire, tz = Conf$db$timezone)
         RV$relay_pins <- pg.relay_pin()
+        RV$relay_list <- pg.relay_list() 
+    })
+
+    ## Update relay_control
+    observeEvent(input$update_relay,{
+        flog.trace("Selected row = %s", input$relay_table_rows_selected)
+        Relay <- SelectedRelay()
+        pg.update_relay_control(relay_mac = Relay$relay_mac,
+                                off_time_start = input[["edit.off_time_start"]],
+                                off_time_end = input[["edit.off_time_end"]],
+                                off_light_level = input[["edit.off_light_level"]],
+                                envi_mac = input[["edit.envi_mac"]]
+                                )
         RV$relay_list <- pg.relay_list() 
     })
 }
