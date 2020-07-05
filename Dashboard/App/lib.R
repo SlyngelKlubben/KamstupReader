@@ -268,6 +268,7 @@ pg.columns <- function(table, schema="public", sort_columns = TRUE,con=.pg) {
 pg.relay_list <- function(con = .pg) {
     stmt <- "select distinct(relay_mac) from relay_control"
     Macs <- pg.get(q=stmt)
+    ## We could simplify this to a join if only one row per relay_mac
     res <- ddply(Macs, ~ relay_mac , pg.relay_current_state)
     res$Display <- res$relay_mac
     Sensors <- sensor_names()
@@ -275,14 +276,6 @@ pg.relay_list <- function(con = .pg) {
         res <- checkRows(nrow(res), merge(res, Sensors, by.y = "mac", by.x="relay_mac", all.x=TRUE))
         res$Display <- paste(res$name, res$relay_mac)
     }
-##     PinState <- pg.relay_pin()
-##     if(!is.null(PinState) && nrow(PinState) > 0) {
-##         res <- checkRows(nrow(res), merge(res, PinState,  by="relay_mac", all.x=TRUE))
-## ##        res <-  merge(res, PinState,  by="relay_mac", all.x=TRUE)
-##     }
-    ## if(!is.null(res$pin_expire))
-    ##     res <- mutate(res,  pin_expire = format(pin_expire))
-    ## Format times for DT
     for (Col in c("pin_expire", "off_time_start","off_time_end")) {
         if(Col %in% names(res)) {
             res[[Col]] <- format(res[[Col]])
@@ -346,4 +339,20 @@ where relay_mac = '%s'
 ;", off_time_start, off_time_end, off_light_level, envi_mac, relay_mac)
     flog.trace(stmt)
     dbGetQuery(conn=con, statement=stmt)
+}
+
+pg.add_light_relay <- function(relay_mac, task, envi_mac, off_time_start, off_time_end, off_light_level, con = .pg) {
+    flog.trace("Relay_mac: %s", relay_mac)
+    flog.trace("off_time_start: %s", off_time_start)
+    flog.trace("off_light_end: %s", off_time_end)
+    flog.trace("off_light_level: %s", off_light_level)
+    flog.trace("envi_mac: %s", envi_mac)
+    stmt <- sprintf("INSERT INTO relay_control (relay_mac, task, envi_mac, off_time_start, off_time_end, off_light_level)
+VALUES
+('%s', '%s','%s', '%s',' %s', '%s')
+", trimws(relay_mac), trimws(task), trimws(envi_mac), trimws(off_time_start), trimws(off_time_end), trimws(off_light_level))
+    flog.trace(stmt)
+    dbGetQuery(conn=con, statement=stmt)
+    ## also add a pin
+    pg.set_pin(mac=trimws(relay_mac) , state="on", expire=Sys.time()-100)
 }

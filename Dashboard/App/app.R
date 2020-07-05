@@ -111,7 +111,11 @@ ui <- fluidPage(
                    , DT::dataTableOutput("relay_table")
                    , h3("Click a row to select a relay to pin or update")
                    , uiOutput("relay_pinner")
+                   , h2("Relay pins")
                    , DT::dataTableOutput("relay_pins")
+                   , h2("Add a relay")
+                   , selectInput("add_relay_type", "Relay Type", choices = list("-- Select type --", "Light control"))
+                   , uiOutput("add_relay")
                        )
             
              ## , tabPanel("Current",
@@ -415,7 +419,7 @@ server <- function(input, output) {
     output$relay_pins <- DT::renderDataTable({
         ## Todo: eventreactive on pin_me
         RV$relay_pins
-        }, selection = "none")
+        }, selection = "none", options= list(dom="t", ordering = FALSE))
 
     ## Set pin
     observeEvent(input$pin_me, {
@@ -441,6 +445,36 @@ server <- function(input, output) {
                                 )
         RV$relay_list <- pg.relay_list() 
     })
+
+    ## Add relay
+    output$add_relay <- renderUI({
+        req(input$add_relay_type)
+        relayParameters <- "relay_mac"
+        if(input$add_relay_type == "Light control") {
+            relayParameters <- c("relay_mac", "envi_mac", "off_time_start", "off_time_end", "off_light_level")
+        } else {
+            return(NULL)
+        }
+        tagList(
+            lapply(relayParameters, function(x){textInput(paste("addrelay",x, sep="."), label=x)})
+            , actionButton("add_relay", "Add Relay", style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
+        )
+    })
+    observeEvent(input$add_relay, {
+        if(input$add_relay_type == "Light control"){
+            pg.add_light_relay(relay_mac = input[["addrelay.relay_mac"]],
+                         task = "light_control",
+                         envi_mac = input[["addrelay.envi_mac"]],
+                         off_time_start = input[["addrelay.off_time_start"]],
+                         off_time_end = input[["addrelay.off_time_end"]],
+                         off_light_level = input[["addrelay.off_light_level"]]
+                         )
+        } else {
+            warning("Not implemented: ", input$add_relay_type)
+        }
+        RV$relay_list <- pg.relay_list() 
+    })
+    
 }
 
 
