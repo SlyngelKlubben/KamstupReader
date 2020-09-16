@@ -76,3 +76,6 @@ echo "sudo umount $ROOTFS"
 echo "sudo umount $BOOT"
 echo "ssh pi@$IP"
 echo "give with pw raspberry"
+
+echo "turning off WLAN power management to avoid unstable connection"
+sudo iwconfig wlan0 power off
