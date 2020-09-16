@@ -20,7 +20,7 @@ sudo bash get-docker.sh
 ## add to group
 sudo usermod -aG docker $USER  
 sudo gpasswd -a $USER docker
-sudo -c newgrp docker 
+sudo newgrp docker 
 sudo newgrp pi
 ## Test:
 docker run hello-world
