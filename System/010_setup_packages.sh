@@ -57,3 +57,5 @@ sudo apt install r-base \
 ## PARTUUID=6c586e13-02  /               ext4    defaults,noatime  0       1
 ## PARTUUID=6c586e13-02  /               ext4    defaults,noatime,commit=600  0       1
 
+## turning off WLAN power management to avoid unstable connection
+sudo iwconfig wlan0 power off
