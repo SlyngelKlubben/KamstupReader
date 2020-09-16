@@ -65,6 +65,15 @@ LANGUAGE PLPGSQL;"
 
 sleep 3
 
+
+PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "CREATE TABLE public.relay_pin (
+id SERIAL,
+relay_mac TEXT UNIQUE, 
+pin_state TEXT,
+pin_expire TIMESTAMP WITH TIME ZONE
+);"
+## Use upsert to update
+
 PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc 'CREATE OR REPLACE VIEW public.relay AS
 SELECT public.relay_state(
  task::text, now()::timestamp with time zone, off_time_start::time with time zone, off_time_end::time with time zone, envi.light::double precision, off_light_level::double precision, pin_state::text, pin_expire::timestamp with time zone) 
@@ -78,11 +87,3 @@ JOIN envi ON relay_control.envi_mac = envi."MAC"
 LEFT JOIN relay_pin on relay_control.relay_mac = relay_pin.relay_mac
 ORDER BY envi.id desc, relay_control.id desc;
 '
-
-PGPASSWORD=$DBPW psql -U $DBUSER $DB -tAc "CREATE TABLE public.relay_pin (
-id SERIAL,
-relay_mac TEXT UNIQUE, 
-pin_state TEXT,
-pin_expire TIMESTAMP WITH TIME ZONE
-);"
-## Use upsert to update
