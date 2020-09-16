@@ -23,7 +23,7 @@ sudo -u postgres psql $DB -tAc "CREATE TABLE public.${TBL} (
 id SERIAL PRIMARY KEY,
 mac TEXT NOT NULL,
 name TEXT NOT NULL,
-location GEOMETRY(POINTZ,25832), -- not null?
+-- location GEOMETRY(POINTZ,25832), -- not null?
 start_date TIMESTAMPTZ  DEFAULT NOW() 
 ) ;
 ALTER TABLE public.sensor_location OWNER to $DBUSER;
