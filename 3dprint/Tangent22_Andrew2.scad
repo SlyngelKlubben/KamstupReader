@@ -14,7 +14,7 @@ ButtonClickerDistance=25;
 ButtonClickerR=3;
 ButtonClickerHeight=0.6;
 
-IkeaSize=33.6;
+IkeaSize=33.7;
 IkeaPCBThickness=1.2;
 IkeaFiletR=5;
 IkeaBatteryD=21;
@@ -35,7 +35,7 @@ ConnectorConeHeight=1.0;
 
 BaseCutDown=2;
 BaseCutInwards=4.5;
-BaseSize=45;
+BaseSize=44.7;
 BaseHeight=4.5;
 BottomThickness=1.5;
 BaseConnectWidth=5;
@@ -43,18 +43,11 @@ BaseConnectHeight=3;
 BaseConnectThickness=1.5;
 BaseConnectAngle=15;
 
-translate([0,0,13])
-difference(){
-Tangent();
-// Cylinder protect of Base Click
-translate([TangentSize/2,0,-3.5])
-rotate([0,90,0])cylinder(h=2,r=5.5,$fn=50,center=true);
-
-translate([-TangentSize/2,0,-3.5])
-rotate([0,90,0])cylinder(h=2,r=5.5,$fn=50,center=true);
-}
+translate([0,0,20])
+SafetyTangent();
+translate([0,0,8])
+FugaClip();
 Base();
-
 
 
 module Base(){
@@ -70,13 +63,13 @@ cube([BaseConnectThickness,BaseConnectWidth,BaseConnectHeight],center=true);
     
     
 // PCB click
-//translate([TangentSize/2-3.7*(TangentSize-IkeaSize)/8,0,BaseHeight+ConnectorConeHeight-0.4])
-//rotate([0,15,0])
-//cube([1,RotateConnectorRInner,RotateConnectorRInner],center=true);
+translate([TangentSize/2-3.7*(TangentSize-IkeaSize)/8,0,BaseHeight+ConnectorConeHeight-0.4])
+rotate([0,15,0])
+cube([1,RotateConnectorRInner,RotateConnectorRInner],center=true);
 
-//translate([-TangentSize/2+3.7*(TangentSize-IkeaSize)/8,0,BaseHeight+ConnectorConeHeight-0.4])
-//rotate([0,-15,0])
-//cube([1,RotateConnectorRInner,RotateConnectorRInner],center=true);
+translate([-TangentSize/2+3.7*(TangentSize-IkeaSize)/8,0,BaseHeight+ConnectorConeHeight-0.4])
+rotate([0,-15,0])
+cube([1,RotateConnectorRInner,RotateConnectorRInner],center=true);
 
 translate([0,0,0])
 difference(){
@@ -114,15 +107,15 @@ translate([-TangentSize/2+3*(TangentSize-IkeaSize)/8,0,BaseHeight+ConnectorConeH
 rotate([0,90,0])
 {
 cylinder(h=(TangentSize-IkeaSize)/4,r=RotateConnectorRInner+RotateConnectorThickness/2,$fn=50,center=true);
-translate([0,0,(TangentSize-IkeaSize)/8+RotateConnectorCone/2])
-cylinder(h=RotateConnectorCone,r1=RotateConnectorRInner,r2=0.1,$fn=50,center=true);
+translate([-0.5,0,(TangentSize-IkeaSize)/8+RotateConnectorCone/2])
+cylinder(h=RotateConnectorCone,r1=RotateConnectorRInner/1.5,r2=0.1,$fn=50,center=true);
 }
 translate([TangentSize/2-3*(TangentSize-IkeaSize)/8,0,BaseHeight+ConnectorConeHeight])
 rotate([0,-90,0])
 {
 cylinder(h=(TangentSize-IkeaSize)/4,r=RotateConnectorRInner+RotateConnectorThickness/2,$fn=50,center=true);
-translate([0,0,(TangentSize-IkeaSize)/8+RotateConnectorCone/2])
-cylinder(h=RotateConnectorCone,r1=RotateConnectorRInner,r2=0.1,$fn=50,center=true);
+translate([0.5,0,(TangentSize-IkeaSize)/8+RotateConnectorCone/2])
+cylinder(h=RotateConnectorCone,r1=RotateConnectorRInner/1.5,r2=0.1,$fn=50,center=true);
 }
 
 // Rotate connector outer cone
@@ -203,6 +196,8 @@ translate([IkeaBatteryLOffset,IkeaBatteryWOffset,-IkeaBatteryThickness+manifoldf
   cylinder(h=IkeaBatteryThickness,d=IkeaBatteryD, center=false);
 }
 }
+
+
 module Tangent(){
 // Rotate connector
 translate([-TangentSize/2+(TangentSize-IkeaSize)/8,0,RotateConnectorDepth])
@@ -219,6 +214,7 @@ difference(){
 cylinder(h=(TangentSize-IkeaSize)/4,r=RotateConnectorRInner+RotateConnectorThickness,$fn=50,center=true);
 translate([0,0,-(TangentSize-IkeaSize)/8+RotateConnectorRInner/2])
 cylinder(h=RotateConnectorRInner+manifoldfix,r1=RotateConnectorRInner,r2=0.1,$fn=50,center=true);
+
 }
 
 
@@ -238,8 +234,6 @@ translate([14,0,TangentSide-TangentRDepth-TangenWallThickness+SpringThickness/2]
 TangentSprings();
 translate([-14,0,TangentSide-TangentRDepth-TangenWallThickness+SpringThickness/2])
 TangentSprings();
-
-
 
 difference(){
 translate([0,0,TangentSide/2])
@@ -273,12 +267,19 @@ rotate([0,90,0])cylinder(h=(TangentSize-IkeaSize)/2+manifoldfix,r=RotateConnecto
 
 translate([TangentSize/2-(TangentSize-IkeaSize)/4-1/2,0,RotateConnectorDepth])
 rotate([0,90,0])cylinder(h=(TangentSize-IkeaSize)/2+manifoldfix-1,r=RotateConnectorRInner+RotateConnectorThickness,$fn=50,center=true);
-
-
 }
+}
+module SafetyTangent(){
+translate([0,0,4])
+difference(){
+    Tangent();
+    // Cylinder protect of Base Click
+    translate([TangentSize/2,0,-3.5])
+    rotate([0,90,0])cylinder(h=2,r=5.5,$fn=50,center=true);
 
-
-
+    translate([-TangentSize/2,0,-3.5])
+    rotate([0,90,0])cylinder(h=2,r=5.5,$fn=50,center=true);
+}
 }
 
 module TangentSprings(){
@@ -321,4 +322,42 @@ cylinder(h=TangentSide*3,r=FiletTangentR,$fn=50,center=true);
 translate([TangentSize/2,TangentSize/2,0])
 rotate([TangentAngle,0,0])
 cylinder(h=TangentSide*3,r=FiletTangentR,$fn=50,center=true);
+}
+
+module FugaClip(){
+    difference(){
+        translate([0,0,6.9])
+        cube([31,40,1.3],center=true);
+        translate([7,0,6.9])
+        cube([7,7,2],center=true);
+        translate([-7,0,6.9])
+        cube([7,7,2],center=true);
+        translate([0,0,6.9])
+        cube([4,4,2],center=true);
+    }
+    
+    // Rotate connector
+    translate([15.3,0,6])
+    rotate([0,90,0])
+    difference(){
+        cylinder(h=(TangentSize-IkeaSize)/4,r=RotateConnectorRInner/1.5+RotateConnectorThickness,$fn=50,center=true);
+        translate([0,0,(TangentSize-IkeaSize)/8-RotateConnectorRInner/2])
+        cylinder(h=RotateConnectorRInner+manifoldfix,r1=0.1,r2=RotateConnectorRInner/1.5,$fn=50,center=true);
+    }
+    translate([-15.3,0,6])
+    rotate([0,-90,0])
+    difference(){
+        cylinder(h=(TangentSize-IkeaSize)/4,r=RotateConnectorRInner/1.5+RotateConnectorThickness,$fn=50,center=true);
+        translate([0,0,(TangentSize-IkeaSize)/8-RotateConnectorRInner/2])
+        cylinder(h=RotateConnectorRInner+manifoldfix,r1=0.1,r2=RotateConnectorRInner/1.5,$fn=50,center=true);
+    }
+    
+    // button clickers
+    translate([0,ButtonClickerDistance/2,TangentSide-TangentRDepth-TangenWallThickness-ButtonClickerHeight+2.5])
+    rotate([0,0,45])
+    cylinder(h=ButtonClickerHeight+1,r1=ButtonClickerR, r2=ButtonClickerR+ButtonClickerHeight,$fn=4,center=false);
+
+    translate([0,-ButtonClickerDistance/2,TangentSide-TangentRDepth-TangenWallThickness-ButtonClickerHeight+2.5])
+    rotate([0,0,45])
+    cylinder(h=ButtonClickerHeight+1,r1=ButtonClickerR, r2=ButtonClickerR+ButtonClickerHeight,$fn=4,center=false);
 }
