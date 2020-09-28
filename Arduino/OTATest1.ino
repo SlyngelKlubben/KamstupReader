@@ -12,9 +12,7 @@
 
 #define durationSleep  120    // in seconds
 
-const char* softwareVersion = "20200425"; // Update This!!
-
-const int FW_VERSION = 1234;
+const char* softwareVersion = "20200928"; // Update This!!
 
 const char* fwUrlBase = "http://192.168.1.4:21451/fota/";
 
@@ -79,13 +77,11 @@ void checkForUpdates() {
     String newFWVersion = httpClient.getString();
 
     Serial.print( "Current firmware version: " );
-    Serial.println( FW_VERSION );
+    Serial.println( softwareVersion );
     Serial.print( "Available firmware version: " );
     Serial.println( newFWVersion );
 
-    int newVersion = newFWVersion.toInt();
-
-   if ( newVersion > FW_VERSION ) {
+   if ( newFWVersion > softwareVersion ) {
       Serial.println( "Preparing to update" );
 
       String fwImageURL = fwURL;
