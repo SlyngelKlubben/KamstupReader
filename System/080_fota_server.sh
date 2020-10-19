@@ -1,8 +1,16 @@
 ## Add OTA server
 ## Run this as root on raspberry
 
+## Check we are running as root
+if (( $EUID != 0 )); then
+    echo "Please run $0 as root"
+    exit
+fi
+
+
 ## Add web-server
-apt install micro-httpd
+sudo apt update
+sudo apt install micro-httpd
 
 ## Run on high port: 21451
 cat > /etc/systemd/system/sockets.target.wants/micro-httpd.socket <<EOF
@@ -24,4 +32,5 @@ sudo chgrp pi /var/www/fota
 sudo chmod g+w /var/www/fota
 
 ## Restart server
+sudo systemctl daemon-reload
 sudo systemctl restart micro-httpd.socket
