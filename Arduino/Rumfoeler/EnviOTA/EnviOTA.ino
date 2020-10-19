@@ -229,7 +229,7 @@ void checkForUpdates() {
   int httpCode = httpClient.GET();
   if ( httpCode == 200 ) {
     String newFWVersion = httpClient.getString();
-
+    newFWVersion.trim();
     Serial.print( "Current firmware version: " );
     Serial.println( softwareVersion );
     Serial.print( "Available firmware version: " );
