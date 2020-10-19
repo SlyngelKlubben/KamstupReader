@@ -28,8 +28,8 @@ EOF
 
 ## Add folder and set permissions
 sudo mkdir  /var/www/html/fota
-sudo chgrp pi /var/www/fota
-sudo chmod g+w /var/www/fota
+sudo chgrp pi /var/www/html/fota
+sudo chmod g+w /var/www/html/fota
 
 ## Restart server
 sudo systemctl daemon-reload
