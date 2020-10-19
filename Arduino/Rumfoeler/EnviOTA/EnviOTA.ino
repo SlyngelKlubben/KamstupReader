@@ -25,8 +25,6 @@ Adafruit_BME280 bme; // BME used as shorter name
 
 const char* softwareVersion = "20201019"; // Update This!!
 
-const char* fwUrlBase = "http://192.168.1.4:21451/fota/";
-
 const char* db = "envi";
 
 // String variables
