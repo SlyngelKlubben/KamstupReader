@@ -291,7 +291,10 @@ pg.relay_current_state <- function(mac, con = .pg) {
 
 pg.relay_pin <- function(con = .pg) {
     stmt <- sprintf("select * from relay_pin ")
-    mutate(pg.get(q=stmt), pin_expire = format(pin_expire))
+    res <- pg.get(q=stmt)
+    if(nrow(res) == 0)
+        return(res)
+    mutate(res, pin_expire = format(pin_expire))
 }
 
 datetimeSlider <- function(id, message="Pick Timestamp", From = Sys.time(), To = Sys.time() + 86400, Width=NULL){
