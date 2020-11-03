@@ -67,7 +67,7 @@ void setup() {
   wifi_connect();
   // Construct dbstring
   // dbstring1 hentes fra parameters.h
-  sprintf(dbstring, "%s&relay_mac=%s", dbstring1, WiFi.macAddress().c_str()); // http://192.168.1.4:3000/hus/public/relay?_page=1&_page_size=1&_select=state&relay_mac=84:F3:EB:3B:7C:ET
+  sprintf(dbstring, "%s/relay?_page=1&_page_size=1&_select=state&relay_mac=%s", dbstring1, WiFi.macAddress().c_str()); // http://192.168.1.4:3000/hus/public/relay?_page=1&_page_size=1&_select=state&relay_mac=84:F3:EB:3B:7C:ET
  
   Serial.println("Entering loop");
 }
