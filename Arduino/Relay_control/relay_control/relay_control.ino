@@ -11,7 +11,7 @@
  
 #include "parameters.h"  
  
-const char* softwareVersion = "20200526"; // Update This!!
+const char* softwareVersion = "20201103"; // Update This!!
 
 // const char* dbask = "lightstate";
 // const char* db = "envi";
