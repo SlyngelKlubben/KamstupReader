@@ -268,6 +268,8 @@ pg.columns <- function(table, schema="public", sort_columns = TRUE,con=.pg) {
 pg.relay_list <- function(con = .pg) {
     stmt <- "select distinct(relay_mac) from relay_control"
     Macs <- pg.get(q=stmt)
+    if(nrow(Macs) == 0)
+        return(res)
     ## We could simplify this to a join if only one row per relay_mac
     res <- ddply(Macs, ~ relay_mac , pg.relay_current_state)
     res$Display <- res$relay_mac
