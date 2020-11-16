@@ -62,14 +62,7 @@ rotate([0,-BaseConnectAngle,0])
 cube([BaseConnectThickness,BaseConnectWidth,BaseConnectHeight],center=true);
     
     
-// PCB click
-translate([TangentSize/2-3.7*(TangentSize-IkeaSize)/8,0,BaseHeight+ConnectorConeHeight-0.4])
-rotate([0,15,0])
-cube([1,RotateConnectorRInner,RotateConnectorRInner],center=true);
 
-translate([-TangentSize/2+3.7*(TangentSize-IkeaSize)/8,0,BaseHeight+ConnectorConeHeight-0.4])
-rotate([0,-15,0])
-cube([1,RotateConnectorRInner,RotateConnectorRInner],center=true);
 
 translate([0,0,0])
 difference(){
@@ -99,48 +92,22 @@ translate([0,+4.5,BaseHeight-IkeaPCBThickness+2*manifoldfix-3])
 translate([IkeaBatteryLOffset,IkeaBatteryWOffset+100/2,+IkeaBatterySlotThickness/2-IkeaBatteryThickness])
 cube([IkeaBatteryD,100,IkeaBatterySlotThickness],center=true);
 
-}
+
 
 
 // Rotate connector inner cone
-translate([-TangentSize/2+3*(TangentSize-IkeaSize)/8,0,BaseHeight+ConnectorConeHeight])
-rotate([0,90,0])
-{
-cylinder(h=(TangentSize-IkeaSize)/4,r=RotateConnectorRInner+RotateConnectorThickness/2,$fn=50,center=true);
-translate([-0.5,0,(TangentSize-IkeaSize)/8+RotateConnectorCone/2])
-cylinder(h=RotateConnectorCone,r1=RotateConnectorRInner/1.5,r2=0.1,$fn=50,center=true);
-}
-translate([TangentSize/2-3*(TangentSize-IkeaSize)/8,0,BaseHeight+ConnectorConeHeight])
+translate([-TangentSize/2+3*(TangentSize-IkeaSize)/8+RotateConnectorCone,0,BaseHeight+ConnectorConeHeight+0.5])
 rotate([0,-90,0])
-{
-cylinder(h=(TangentSize-IkeaSize)/4,r=RotateConnectorRInner+RotateConnectorThickness/2,$fn=50,center=true);
-translate([0.5,0,(TangentSize-IkeaSize)/8+RotateConnectorCone/2])
+cylinder(h=RotateConnectorCone,r1=RotateConnectorRInner/1.5,r2=0.1,$fn=50,center=true);
+
+translate([TangentSize/2-3*(TangentSize-IkeaSize)/8-RotateConnectorCone,0,BaseHeight+ConnectorConeHeight+0.5])
+rotate([0,90,0])
 cylinder(h=RotateConnectorCone,r1=RotateConnectorRInner/1.5,r2=0.1,$fn=50,center=true);
 }
 
-// Rotate connector outer cone
-translate([-TangentSize/2+3*(TangentSize-IkeaSize)/8,0,BaseHeight+ConnectorConeHeight])
-rotate([0,-90,0])
-{
-cylinder(h=(TangentSize-IkeaSize)/4,r=RotateConnectorRInner+RotateConnectorThickness/2,$fn=50,center=true);
-translate([0,0,(TangentSize-IkeaSize)/8+RotateConnectorCone/2])
-cylinder(h=RotateConnectorCone,r1=RotateConnectorRInner,r2=0.1,$fn=50,center=true);
+
+
 }
-translate([TangentSize/2-3*(TangentSize-IkeaSize)/8,0,BaseHeight+ConnectorConeHeight])
-rotate([0,90,0])
-{
-cylinder(h=(TangentSize-IkeaSize)/4,r=RotateConnectorRInner+RotateConnectorThickness/2,$fn=50,center=true);
-translate([0,0,(TangentSize-IkeaSize)/8+RotateConnectorCone/2])
-cylinder(h=RotateConnectorCone,r1=RotateConnectorRInner,r2=0.1,$fn=50,center=true);
-}
-// Rotate connector Stand
-translate([-TangentSize/2+3*(TangentSize-IkeaSize)/8,0,BaseHeight/2+ConnectorConeHeight])
-cube([(TangentSize-IkeaSize)/4,2*RotateConnectorRInner+RotateConnectorThickness,BaseHeight],center=true);
-
-translate([TangentSize/2-3*(TangentSize-IkeaSize)/8,0,BaseHeight/2+ConnectorConeHeight])
-cube([(TangentSize-IkeaSize)/4,2*RotateConnectorRInner+RotateConnectorThickness,BaseHeight],center=true);
-
-
 
 
 module BaseCut(){
@@ -170,7 +137,37 @@ translate([0,0,-BottomThickness+2*manifoldfix])
 cylinder(h=BottomThickness,r1=BaseSize/2-BottomThickness-3,r2=BaseSize/2-3, center=false);
 
 
+// Rotate connector outer cone
+translate([-TangentSize/2+3*(TangentSize-IkeaSize)/8,0,BaseHeight+ConnectorConeHeight])
+rotate([0,-90,0])
+{
+cylinder(h=(TangentSize-IkeaSize)/4,r=RotateConnectorRInner+RotateConnectorThickness/2,$fn=50,center=true);
+translate([0,0,(TangentSize-IkeaSize)/8+RotateConnectorCone/2])
+cylinder(h=RotateConnectorCone,r1=RotateConnectorRInner,r2=0.1,$fn=50,center=true);
+}
+translate([TangentSize/2-3*(TangentSize-IkeaSize)/8,0,BaseHeight+ConnectorConeHeight])
+rotate([0,90,0])
+{
+cylinder(h=(TangentSize-IkeaSize)/4,r=RotateConnectorRInner+RotateConnectorThickness/2,$fn=50,center=true);
+translate([0,0,(TangentSize-IkeaSize)/8+RotateConnectorCone/2])
+cylinder(h=RotateConnectorCone,r1=RotateConnectorRInner,r2=0.1,$fn=50,center=true);
+}
 
+// PCB click
+translate([TangentSize/2-3.7*(TangentSize-IkeaSize)/8,0,BaseHeight+ConnectorConeHeight-0.4])
+rotate([0,15,0])
+cube([1,RotateConnectorRInner,RotateConnectorRInner],center=true);
+
+translate([-TangentSize/2+3.7*(TangentSize-IkeaSize)/8,0,BaseHeight+ConnectorConeHeight-0.4])
+rotate([0,-15,0])
+cube([1,RotateConnectorRInner,RotateConnectorRInner],center=true);
+
+// Rotate connector Stand
+translate([-TangentSize/2+3*(TangentSize-IkeaSize)/8,0,BaseHeight/2+ConnectorConeHeight])
+cube([(TangentSize-IkeaSize)/4,2*RotateConnectorRInner+RotateConnectorThickness,BaseHeight],center=true);
+
+translate([TangentSize/2-3*(TangentSize-IkeaSize)/8,0,BaseHeight/2+ConnectorConeHeight])
+cube([(TangentSize-IkeaSize)/4,2*RotateConnectorRInner+RotateConnectorThickness,BaseHeight],center=true);
 
 
 
@@ -194,7 +191,7 @@ cube([IkeaSize-2*IkeaFiletR-6,IkeaSize-2*IkeaFiletR-6,IkeaPCBThickness], center=
 // Hole for Battery
 translate([IkeaBatteryLOffset,IkeaBatteryWOffset,-IkeaBatteryThickness+manifoldfix])
   cylinder(h=IkeaBatteryThickness,d=IkeaBatteryD, center=false);
-}
+
 }
 
 
