@@ -3,3 +3,4 @@
 .Rhistory
 .RData
 *.yml
+Arduino/Rumfoeler/EnviOTA/parameters.h
