@@ -45,7 +45,7 @@ coap_device_info <- function(dev_id, hub_data = my_hub, port = 5684, result = "v
 .parse_bulp <- function(l1){
     r2 <- data.frame(State=as.character(NA), Brightness = as.numeric(NA), Hue = as.numeric(NA), ColorTemp = as.numeric(NA), ColorHex = as.character(NA), Saturation = as.numeric(NA), colorX = as.numeric(NA), colorY=as.numeric(NA), TransitionTime = as.numeric(NA))
     if("5850" %in% names(l1))
-        r2$State = ifelse(l1$`5850`== 1, "On", "Off")
+        r2$State = l1$`5850` ## ifelse(l1$`5850`== 1, "Off", "On")
     if("5851" %in% names(l1))
         r2$Brightness = l1$`5851`
     if( "5706" %in% names(l1))
